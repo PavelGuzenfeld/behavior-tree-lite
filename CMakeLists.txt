@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-project(behavior_tree_lite VERSION 1.0.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.22)
+project(behavior_tree_lite VERSION 0.0.1 LANGUAGES CXX)
 
 # ==========================================
 # OPTIONS
@@ -109,6 +109,7 @@ if(BUILD_TESTING)
         test/test_decorator.cpp
         test/test_leaf.cpp
         test/test_integration.cpp
+        test/test_dsl.cpp
       )
       target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
     endif()
@@ -123,6 +124,7 @@ if(BUILD_TESTING)
         test/test_decorator.cpp
         test/test_leaf.cpp
         test/test_integration.cpp
+        test/test_dsl.cpp
       )
       target_link_libraries(${PROJECT_NAME}_test
         ${PROJECT_NAME}
@@ -141,7 +143,10 @@ if(BUILD_EXAMPLES)
   add_executable(example_robot examples/robot_example.cpp)
   target_link_libraries(example_robot ${PROJECT_NAME})
   
-  install(TARGETS example_robot
+  add_executable(example_dsl examples/minimal_composition.cpp)
+  target_link_libraries(example_dsl ${PROJECT_NAME})
+  
+  install(TARGETS example_robot example_dsl
     RUNTIME DESTINATION lib/${PROJECT_NAME}
   )
 endif()

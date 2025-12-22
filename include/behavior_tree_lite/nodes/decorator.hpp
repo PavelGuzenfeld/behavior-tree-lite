@@ -14,6 +14,9 @@ namespace bt
     template <typename Event, typename Context, IsNode<Event, Context> Child>
     struct Inverter : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         Child child;
 
         constexpr explicit Inverter(Child c) : child(std::move(c)) {}
@@ -45,6 +48,9 @@ namespace bt
     template <typename Event, typename Context, IsNode<Event, Context> Child>
     struct Retry : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         Child child;
         int max_attempts;
         int attempts = 0;
@@ -80,6 +86,9 @@ namespace bt
     template <typename Event, typename Context, IsNode<Event, Context> Child>
     struct Repeat : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         Child child;
         int max_iterations;
         int completed = 0;
@@ -128,6 +137,9 @@ namespace bt
     template <typename Event, typename Context, IsNode<Event, Context> Child>
     struct Succeeder : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         Child child;
 
         constexpr explicit Succeeder(Child c) : child(std::move(c)) {}
@@ -149,6 +161,9 @@ namespace bt
     template <typename Event, typename Context, IsNode<Event, Context> Child>
     struct Failer : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         Child child;
 
         constexpr explicit Failer(Child c) : child(std::move(c)) {}
@@ -170,6 +185,9 @@ namespace bt
     template <typename Event, typename Context, IsNode<Event, Context> Child>
     struct Timeout : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         Child child;
         int max_ticks;
         int ticks = 0;
@@ -207,6 +225,9 @@ namespace bt
         requires std::predicate<Pred, const Context &>
     struct Guard : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         [[no_unique_address]] Pred pred;
         Child child;
 

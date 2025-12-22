@@ -20,6 +20,9 @@ namespace bt
         requires std::invocable<F, const Event &, Context &>
     struct Action : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         [[no_unique_address]] F func;
 
         constexpr explicit Action(F f) : func(std::move(f)) {}
@@ -56,6 +59,9 @@ namespace bt
     template <typename Event, typename Context, typename State, typename F>
     struct StatefulAction : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         State state;
         State initial;
         [[no_unique_address]] F func;
@@ -89,6 +95,9 @@ namespace bt
         requires std::predicate<Pred, const Event &, const Context &>
     struct Condition : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         [[no_unique_address]] Pred predicate;
 
         constexpr explicit Condition(Pred pred) : predicate(std::move(pred)) {}
@@ -111,6 +120,9 @@ namespace bt
     template <typename Event, typename Context>
     struct AlwaysSuccess : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &)
         {
             return Status::Success;
@@ -125,6 +137,9 @@ namespace bt
     template <typename Event, typename Context>
     struct AlwaysFailure : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &)
         {
             return Status::Failure;
@@ -139,6 +154,9 @@ namespace bt
     template <typename Event, typename Context>
     struct AlwaysRunning : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &)
         {
             return Status::Running;
@@ -154,6 +172,9 @@ namespace bt
     template <typename Event, typename Context>
     struct DynamicAction : NodeBase
     {
+        using EventType = Event;
+        using ContextType = Context;
+
         using ProcessFn = std::function<Status(const Event &, Context &)>;
         using ResetFn = std::function<void()>;
 
