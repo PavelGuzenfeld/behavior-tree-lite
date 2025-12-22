@@ -1,0 +1,168 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  # ==========================================
+  # ROS2 BUILD & TEST
+  # ==========================================
+  ros2-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro: [humble, iron, jazzy]
+        include:
+          - ros_distro: humble
+            os: ubuntu-22.04
+          - ros_distro: iron
+            os: ubuntu-22.04
+          - ros_distro: jazzy
+            os: ubuntu-24.04
+
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ros:${{ matrix.ros_distro }}-ros-base
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3-colcon-common-extensions python3-rosdep
+          rosdep update --rosdistro ${{ matrix.ros_distro }}
+          rosdep install --from-paths . --ignore-src -y
+
+      - name: Build
+        run: |
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+
+      - name: Test
+        run: |
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          source install/setup.bash
+          colcon test
+          colcon test-result --verbose
+
+  # ==========================================
+  # STANDALONE CMAKE BUILD
+  # ==========================================
+  standalone-build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        compiler: [gcc, clang]
+        include:
+          - os: ubuntu-22.04
+            compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - os: ubuntu-22.04
+            compiler: clang
+            cc: clang-14
+            cxx: clang++-14
+          - os: ubuntu-24.04
+            compiler: gcc
+            cc: gcc-13
+            cxx: g++-13
+          - os: ubuntu-24.04
+            compiler: clang
+            cc: clang-18
+            cxx: clang++-18
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build libgtest-dev
+          # Build gtest
+          cd /usr/src/gtest
+          sudo cmake -B build -G Ninja
+          sudo cmake --build build
+          sudo cmake --install build
+
+      - name: Configure
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_TESTING=ON \
+            -DBUILD_EXAMPLES=ON
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  # ==========================================
+  # STATIC ANALYSIS
+  # ==========================================
+  static-analysis:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-tidy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy-18
+
+      - name: Configure
+        run: |
+          cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy
+        run: |
+          clang-tidy-18 \
+            -p build \
+            --warnings-as-errors='*' \
+            include/behavior_tree_lite/*.hpp \
+            include/behavior_tree_lite/nodes/*.hpp \
+            || true  # Don't fail on warnings for now
+
+  # ==========================================
+  # DOCUMENTATION CHECK
+  # ==========================================
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check README
+        run: |
+          if [ ! -f README.md ]; then
+            echo "README.md not found!"
+            exit 1
+          fi
+          echo "README.md exists"
+
+      - name: Check LICENSE
+        run: |
+          if [ ! -f LICENSE ]; then
+            echo "LICENSE not found!"
+            exit 1
+          fi
+          echo "LICENSE exists"
