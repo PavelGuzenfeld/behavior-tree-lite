@@ -59,7 +59,7 @@ namespace
     {
         Status process(const Event &e, RobotContext &ctx)
         {
-            return std::visit(overloaded{[&](const EnemyEvent &en)
+            return std::visit(overloaded{[&](const EnemyEvent &)
                                          {
                                              ctx.enemies_detected++;
                                              return Status::Success;
