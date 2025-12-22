@@ -127,7 +127,7 @@ namespace
 
         auto result = retry.process(evt, ctx);
         EXPECT_EQ(result, Status::Success);
-        EXPECT_EQ(retry.attempts_made, 0);
+        EXPECT_EQ(retry.attempts, 0);
     }
 
     TEST(RetryTest, RetriesOnFailure)
@@ -140,17 +140,17 @@ namespace
         // First attempt fails, returns Running
         auto r1 = retry.process(evt, ctx);
         EXPECT_EQ(r1, Status::Running);
-        EXPECT_EQ(retry.attempts_made, 1);
+        EXPECT_EQ(retry.attempts, 1);
 
         // Second attempt fails, returns Running
         auto r2 = retry.process(evt, ctx);
         EXPECT_EQ(r2, Status::Running);
-        EXPECT_EQ(retry.attempts_made, 2);
+        EXPECT_EQ(retry.attempts, 2);
 
         // Third attempt fails, gives up
         auto r3 = retry.process(evt, ctx);
         EXPECT_EQ(r3, Status::Failure);
-        EXPECT_EQ(retry.attempts_made, 3);
+        EXPECT_EQ(retry.attempts, 3);
     }
 
     TEST(RetryTest, ResetClearsAttempts)
@@ -161,10 +161,10 @@ namespace
         Retry<TestEvent, TestContext, FailureNode> retry(3, FailureNode{});
 
         retry.process(evt, ctx);
-        EXPECT_EQ(retry.attempts_made, 1);
+        EXPECT_EQ(retry.attempts, 1);
 
         retry.reset();
-        EXPECT_EQ(retry.attempts_made, 0);
+        EXPECT_EQ(retry.attempts, 0);
     }
 
     // ==========================================
@@ -317,10 +317,10 @@ namespace
 
         timeout.process(evt, ctx);
         timeout.process(evt, ctx);
-        EXPECT_EQ(timeout.ticks_elapsed, 2);
+        EXPECT_EQ(timeout.ticks, 2);
 
         timeout.reset();
-        EXPECT_EQ(timeout.ticks_elapsed, 0);
+        EXPECT_EQ(timeout.ticks, 0);
     }
 
 } // anonymous namespace

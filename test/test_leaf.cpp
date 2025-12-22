@@ -21,6 +21,21 @@ namespace
         bool flag = false;
     };
 
+    template <typename E, typename C>
+    struct DynamicCondition : NodeBase
+    {
+        std::function<bool(const E &, const C &)> predicate;
+
+        explicit DynamicCondition(std::function<bool(const E &, const C &)> pred)
+            : predicate(std::move(pred)) {}
+
+        Status process(const E &e, C &ctx)
+        {
+            return predicate(e, ctx) ? Status::Success : Status::Failure;
+        }
+        void reset() {}
+    };
+
     // ==========================================
     // ACTION TESTS
     // ==========================================
@@ -33,7 +48,7 @@ namespace
         bool called = false;
         int received_value = 0;
 
-        Action<TestEvent, TestContext> action(
+        DynamicAction<TestEvent, TestContext> action(
             [&](const TestEvent &e, TestContext &)
             {
                 called = true;
@@ -55,7 +70,7 @@ namespace
 
         bool reset_called = false;
 
-        Action<TestEvent, TestContext> action(
+        DynamicAction<TestEvent, TestContext> action(
             [](const TestEvent &, TestContext &)
             { return Status::Success; },
             [&]()
@@ -72,7 +87,7 @@ namespace
         ctx.state = 0;
         TestEvent evt;
 
-        Action<TestEvent, TestContext> action(
+        DynamicAction<TestEvent, TestContext> action(
             [](const TestEvent &, TestContext &c)
             {
                 c.state = 100;
@@ -90,7 +105,7 @@ namespace
         TestEvent evt;
         int tick_count = 0;
 
-        Action<TestEvent, TestContext> action(
+        DynamicAction<TestEvent, TestContext> action(
             [&](const TestEvent &, TestContext &)
             {
                 tick_count++;
@@ -113,7 +128,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Condition<TestEvent, TestContext> cond(
+        DynamicCondition<TestEvent, TestContext> cond(
             [](const TestEvent &, const TestContext &)
             { return true; });
 
@@ -126,7 +141,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Condition<TestEvent, TestContext> cond(
+        DynamicCondition<TestEvent, TestContext> cond(
             [](const TestEvent &, const TestContext &)
             { return false; });
 
@@ -140,7 +155,7 @@ namespace
         ctx.flag = true;
         TestEvent evt;
 
-        Condition<TestEvent, TestContext> cond(
+        DynamicCondition<TestEvent, TestContext> cond(
             [](const TestEvent &, const TestContext &c)
             { return c.flag; });
 
@@ -155,7 +170,7 @@ namespace
         TestContext ctx;
         TestEvent evt{50};
 
-        Condition<TestEvent, TestContext> cond(
+        DynamicCondition<TestEvent, TestContext> cond(
             [](const TestEvent &e, const TestContext &)
             { return e.value > 25; });
 
@@ -170,12 +185,11 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        // Condition should never return Running
-        Condition<TestEvent, TestContext> cond_true(
+        DynamicCondition<TestEvent, TestContext> cond_true(
             [](const TestEvent &, const TestContext &)
             { return true; });
 
-        Condition<TestEvent, TestContext> cond_false(
+        DynamicCondition<TestEvent, TestContext> cond_false(
             [](const TestEvent &, const TestContext &)
             { return false; });
 
