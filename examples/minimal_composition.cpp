@@ -80,7 +80,9 @@ int main()
 
     // Tree: (CheckBattery -> (Scan ? Attack)) ? RunAway
     auto tree =
-        (CheckBattery{} >> (Scan{} | Attack{})) | RunAway{};
+        (CheckBattery{} && (Scan{} || Attack{})) || RunAway{};
+
+    // Grouping is implicit: (CheckBattery && (Scan || Attack)) || RunAway
 
     std::cout << "--- Tick 1: Initial State ---\n";
     tree.process(Tick{}, ctx); // Prints: Battery OK, Scanning...

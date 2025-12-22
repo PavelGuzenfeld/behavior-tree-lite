@@ -77,47 +77,49 @@ namespace bt
     // OPERATORS
     // ==========================================
 
-    // --- SEQUENCE (>>) ---
+    // --- SEQUENCE (&&) ---
+    // Replaces "->" or ">>". Represents "Do A AND B".
 
-    // Case 1: Node >> Node
+    // Case 1: Node && Node
     template <typename L, typename R>
-    constexpr auto operator>>(L &&l, R &&r)
+    constexpr auto operator&&(L &&l, R &&r)
     {
         using E = typename NodeTraits<L>::EventType;
         using C = typename NodeTraits<L>::ContextType;
         return make_sequence<E, C>(std::forward<L>(l), std::forward<R>(r));
     }
 
-    // Case 2: Sequence >> Node (Flattening)
+    // Case 2: Sequence && Node (Flattening)
     template <typename E, typename C, typename... Children, typename R>
-    constexpr auto operator>>(Sequence<E, C, Children...> &&seq, R &&r)
+    constexpr auto operator&&(Sequence<E, C, Children...> &&seq, R &&r)
     {
         return std::apply([&](auto &&...args)
                           { return make_sequence<E, C>(std::forward<decltype(args)>(args)..., std::forward<R>(r)); }, std::move(seq.children));
     }
 
-    // Case 3: Node >> Sequence (Flattening)
+    // Case 3: Node && Sequence (Flattening)
     template <typename L, typename E, typename C, typename... Children>
-    constexpr auto operator>>(L &&l, Sequence<E, C, Children...> &&seq)
+    constexpr auto operator&&(L &&l, Sequence<E, C, Children...> &&seq)
     {
         return std::apply([&](auto &&...args)
                           { return make_sequence<E, C>(std::forward<L>(l), std::forward<decltype(args)>(args)...); }, std::move(seq.children));
     }
 
-    // --- SELECTOR (|) ---
+    // --- SELECTOR (||) ---
+    // Replaces "?" or "|". Represents "Do A OR B".
 
-    // Case 1: Node | Node
+    // Case 1: Node || Node
     template <typename L, typename R>
-    constexpr auto operator|(L &&l, R &&r)
+    constexpr auto operator||(L &&l, R &&r)
     {
         using E = typename NodeTraits<L>::EventType;
         using C = typename NodeTraits<L>::ContextType;
         return make_selector<E, C>(std::forward<L>(l), std::forward<R>(r));
     }
 
-    // Case 2: Selector | Node (Flattening)
+    // Case 2: Selector || Node (Flattening)
     template <typename E, typename C, typename... Children, typename R>
-    constexpr auto operator|(Selector<E, C, Children...> &&sel, R &&r)
+    constexpr auto operator||(Selector<E, C, Children...> &&sel, R &&r)
     {
         return std::apply([&](auto &&...args)
                           { return make_selector<E, C>(std::forward<decltype(args)>(args)..., std::forward<R>(r)); }, std::move(sel.children));

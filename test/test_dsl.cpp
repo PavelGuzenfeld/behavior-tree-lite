@@ -38,10 +38,10 @@ namespace
         void reset() {}
     };
 
-    // Test Sequence Operator (>>)
+    // Test Sequence Operator (&&)
     TEST(DSLTest, SequenceOperator)
     {
-        auto seq = NodeA{} >> NodeB{};
+        auto seq = NodeA{} && NodeB{};
 
         // Check type deduction
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, NodeA, NodeB>>);
@@ -50,10 +50,10 @@ namespace
         EXPECT_EQ(seq.process(Event{}, ctx), Status::Failure);
     }
 
-    // Test Selector Operator (|)
+    // Test Selector Operator (||)
     TEST(DSLTest, SelectorOperator)
     {
-        auto sel = NodeB{} | NodeA{};
+        auto sel = NodeB{} || NodeA{};
 
         // Check type deduction
         static_assert(std::is_same_v<decltype(sel), Selector<Event, Context, NodeB, NodeA>>);
@@ -74,19 +74,19 @@ namespace
         EXPECT_EQ(inv.process(Event{}, ctx), Status::Failure);
     }
 
-    // Test Flattening (Sequence >> Node)
+    // Test Flattening (Sequence && Node)
     TEST(DSLTest, SequenceFlattening)
     {
-        // (A >> B) >> C should become Sequence<A, B, C>, not Sequence<Sequence<A, B>, C>
-        auto seq = (NodeA{} >> NodeB{}) >> NodeC{};
+        // (A && B) && C should become Sequence<A, B, C>, not Sequence<Sequence<A, B>, C>
+        auto seq = (NodeA{} && NodeB{}) && NodeC{};
 
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, NodeA, NodeB, NodeC>>);
     }
 
-    // Test Flattening (Node >> Sequence)
+    // Test Flattening (Node && Sequence)
     TEST(DSLTest, SequenceFlatteningRight)
     {
-        auto seq = NodeA{} >> (NodeB{} >> NodeC{});
+        auto seq = NodeA{} && (NodeB{} && NodeC{});
 
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, NodeA, NodeB, NodeC>>);
     }
@@ -95,7 +95,7 @@ namespace
     TEST(DSLTest, ComplexComposition)
     {
         // Tree: (A >> B) | (!C)
-        auto tree = (NodeA{} >> NodeB{}) | (!NodeC{});
+        auto tree = (NodeA{} && NodeB{}) || (!NodeC{});
 
         using ExpectedTree = Selector<Event, Context,
                                       Sequence<Event, Context, NodeA, NodeB>,
@@ -113,7 +113,7 @@ namespace
 
     TEST(DSLTest, DeduceFromProcess)
     {
-        auto seq = SimpleNode{} >> NodeA{};
+        auto seq = SimpleNode{} && NodeA{};
 
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, SimpleNode, NodeA>>);
     }
