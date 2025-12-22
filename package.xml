@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>behavior_tree_lite</name>
+  <version>0.0.1</version>
+  <description>
+    A lightweight, header-only, compile-time behavior tree library for C++26.
+    
+    Features stack-based polymorphism using std::variant for events,
+    compile-time node composition with concepts, and zero runtime overhead
+    through template metaprogramming.
+  </description>
+  
+  <maintainer email="pavelguzenfeld@gmail.com">Pavel Guzenfeld</maintainer>
+  <license>MIT</license>
+  
+  <url type="website">https://github.com/pavelguzenfeld/behavior_tree_lite</url>
+  <url type="repository">https://github.com/pavelguzenfeld/behavior_tree_lite.git</url>
+  <url type="bugtracker">https://github.com/pavelguzenfeld/behavior_tree_lite/issues</url>
+  
+  <author email="pavelguzenfeld@gmail.com">Pavel Guzenfeld</author>
+  
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  
+  <!-- Optional ROS2 integration -->
+  <build_depend condition="$ROS_VERSION == 2">rclcpp</build_depend>
+  
+  <!-- Testing dependencies -->
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
