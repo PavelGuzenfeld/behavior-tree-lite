@@ -101,11 +101,6 @@ install(
 # ==========================================
 if(BUILD_TESTING)
   if(ament_cmake_FOUND)
-    find_package(ament_lint_auto QUIET)
-    if(ament_lint_auto_FOUND)
-      ament_lint_auto_find_test_dependencies()
-    endif()
-
     find_package(ament_cmake_gtest QUIET)
     if(ament_cmake_gtest_FOUND)
       ament_add_gtest(${PROJECT_NAME}_test
