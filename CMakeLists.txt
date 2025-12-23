@@ -145,11 +145,43 @@ if(BUILD_EXAMPLES)
   
   add_executable(example_dsl examples/minimal_composition.cpp)
   target_link_libraries(example_dsl ${PROJECT_NAME})
-  
-  install(TARGETS example_robot example_dsl
-    RUNTIME DESTINATION lib/${PROJECT_NAME}
+
+  if(ament_cmake_FOUND)
+    find_package(std_msgs REQUIRED)
+    find_package(geometry_msgs REQUIRED)
+    find_package(sensor_msgs REQUIRED)
+    find_package(visualization_msgs REQUIRED)
+
+    add_executable(patrol_robot_node examples/patrol_robot_node.cpp)
+    target_link_libraries(patrol_robot_node ${PROJECT_NAME})
+    ament_target_dependencies(patrol_robot_node
+      rclcpp
+      std_msgs
+      geometry_msgs
+      sensor_msgs
+      visualization_msgs
+    )
+    
+    install(TARGETS example_robot example_dsl patrol_robot_node
+      RUNTIME DESTINATION lib/${PROJECT_NAME}
+    )
+  else()
+    install(TARGETS example_robot example_dsl
+      RUNTIME DESTINATION lib/${PROJECT_NAME}
+    )
+  endif()
+endif()
+
+# ==========================================
+# LAUNCH FILES (ROS2)
+# ==========================================
+if(ament_cmake_FOUND)
+  install(
+    DIRECTORY launch/
+    DESTINATION share/${PROJECT_NAME}/launch
   )
 endif()
+
 
 # ==========================================
 # AMENT EXPORT (ROS2 only)

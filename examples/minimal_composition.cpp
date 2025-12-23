@@ -25,6 +25,8 @@ struct Context
 
 struct CheckBattery : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     Status process(const Event &, Context &ctx)
     {
         if (ctx.battery > 20)
@@ -40,6 +42,8 @@ struct CheckBattery : NodeBase
 
 struct Scan : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     Status process(const Event &, Context &ctx)
     {
         if (ctx.enemy_visible)
@@ -55,6 +59,8 @@ struct Scan : NodeBase
 
 struct Attack : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     Status process(const Event &, Context &)
     {
         std::cout << "[Attack] Pow!\n";
@@ -65,6 +71,8 @@ struct Attack : NodeBase
 
 struct RunAway : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     Status process(const Event &, Context &)
     {
         std::cout << "[RunAway] Running away!\n";

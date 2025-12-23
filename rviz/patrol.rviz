@@ -1,0 +1,21 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: BehaviorTree
+      Namespaces:
+        bt: true
+      Topic:
+        Value: /bt_markers
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+  Global Options:
+    Fixed Frame: map
+Window Geometry:
+  Width: 1200
+  Height: 800
