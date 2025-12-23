@@ -323,6 +323,9 @@ AlwaysRunning<E, C>{}
 - GTest (for tests)
 - ROS2 Humble/Jazzy (optional, for ROS2 integration)
 
+## Roadmap
+See [ROADMAP.md](ROADMAP.md) for the detailed development plan. Upcoming v0.0.2 features include:
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
