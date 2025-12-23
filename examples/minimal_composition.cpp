@@ -1,5 +1,6 @@
-#include <behavior_tree_lite/behavior_tree.hpp>
-#include <behavior_tree_lite/dsl.hpp>
+#include "behavior_tree_lite/behavior_tree.hpp"
+#include "behavior_tree_lite/debug.hpp"
+#include "behavior_tree_lite/dsl.hpp"
 #include <iostream>
 #include <variant>
 
@@ -26,7 +27,6 @@ struct CheckBattery : NodeBase
 {
     Status process(const Event &, Context &ctx)
     {
-        // ADDED: Print status
         if (ctx.battery > 20)
         {
             std::cout << "[CheckBattery] OK (" << ctx.battery << "%)\n";
@@ -42,7 +42,6 @@ struct Scan : NodeBase
 {
     Status process(const Event &, Context &ctx)
     {
-        // ADDED: Print status
         if (ctx.enemy_visible)
         {
             std::cout << "[Scan] Enemy Spotted!\n";
@@ -78,23 +77,27 @@ int main()
 {
     Context ctx;
 
-    // Tree: (CheckBattery -> (Scan ? Attack)) ? RunAway
+    // === NEW LOGICAL SYNTAX ===
+    // Added outer parentheses to silence -Wparentheses warning
     auto tree =
         (CheckBattery{} && (Scan{} || Attack{})) || RunAway{};
 
-    // Grouping is implicit: (CheckBattery && (Scan || Attack)) || RunAway
+    // === DEBUG PRINT ===
+    std::cout << "=== Behavior Tree Structure ===\n";
+    print_tree(tree);
+    std::cout << "===============================\n\n";
 
     std::cout << "--- Tick 1: Initial State ---\n";
-    tree.process(Tick{}, ctx); // Prints: Battery OK, Scanning...
+    tree.process(Tick{}, ctx);
 
     std::cout << "\n--- Tick 2: Enemy Appears ---\n";
     ctx.enemy_visible = true;
-    tree.process(Tick{}, ctx); // Prints: Enemy Spotted! (Sequence completes)
+    tree.process(Tick{}, ctx);
 
     std::cout << "\n--- Tick 3: Low Battery ---\n";
     ctx.battery = 10;
-    ctx.enemy_visible = false; // Reset enemy
-    tree.process(Tick{}, ctx); // Prints: Battery LOW, Running away!
+    ctx.enemy_visible = false;
+    tree.process(Tick{}, ctx);
 
     return 0;
 }
