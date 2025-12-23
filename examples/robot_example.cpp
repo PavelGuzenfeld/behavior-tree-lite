@@ -50,6 +50,8 @@ struct Context
 
 struct CheckBattery : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     Status process(const Event &e, Context &ctx)
     {
         std::visit(overloaded{[&](const BatteryEvent &b)
@@ -69,6 +71,8 @@ struct CheckBattery : NodeBase
 
 struct ScanForEnemy : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     Status process(const Event &e, Context &)
     {
         return std::visit(overloaded{[](const EnemyEvent &en)
@@ -87,6 +91,8 @@ struct ScanForEnemy : NodeBase
 
 struct FireWeapon : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     int shots = 0;
 
     Status process(const Event &e, Context &)
@@ -105,6 +111,8 @@ struct FireWeapon : NodeBase
 
 struct MoveToCover : NodeBase
 {
+    using EventType = Event;
+    using ContextType = Context;
     Status process(const Event &e, Context &)
     {
         if (std::holds_alternative<TickEvent>(e))
