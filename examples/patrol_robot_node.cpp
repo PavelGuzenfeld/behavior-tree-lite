@@ -385,12 +385,90 @@ private:
 
     void integrate_fake_motion_(double const dt) noexcept
     {
-        // this is not physics. it's "enough for a demo so you can sleep."
-        yaw_ += static_cast<double>(ctx_.cmd_vel.angular.z) * dt;
+        static double const k_speed = 0.6;  // m/s
+        static double const k_extent = 6.0; // how far from center
+        static double const k_eps = 0.05;   // snap tolerance
 
-        double const v = static_cast<double>(ctx_.cmd_vel.linear.x);
-        x_ += v * std::cos(yaw_) * dt;
-        y_ += v * std::sin(yaw_) * dt;
+        auto step_towards = [&](double &v, double const target, double const step)
+        {
+            double const d = target - v;
+            if (std::abs(d) <= step)
+            {
+                v = target;
+                return;
+            }
+            v += (d > 0.0) ? step : -step;
+        };
+
+        // go home while charging / going to charger
+        if ((ctx_.active_node == "Charge") || (ctx_.active_node == "GoToCharger"))
+        {
+            double const step = k_speed * dt;
+            step_towards(x_, 0.0, step);
+            step_towards(y_, 0.0, step);
+
+            // face home-ish (looks nicer)
+            yaw_ = std::atan2(-y_, -x_);
+            return;
+        }
+
+        // cross pattern targets (always pass through center)
+        double tx = 0.0;
+        double ty = 0.0;
+
+        // make sure you have: int patrol_leg_ = 0; as a class member
+        switch (patrol_leg_)
+        {
+        case 0:
+            tx = +k_extent;
+            ty = 0.0;
+            yaw_ = 0.0;
+            break; // to +x
+        case 1:
+            tx = 0.0;
+            ty = 0.0;
+            yaw_ = M_PI;
+            break; // back center
+        case 2:
+            tx = -k_extent;
+            ty = 0.0;
+            yaw_ = M_PI;
+            break; // to -x
+        case 3:
+            tx = 0.0;
+            ty = 0.0;
+            yaw_ = 0.0;
+            break; // back center
+        case 4:
+            tx = 0.0;
+            ty = +k_extent;
+            yaw_ = M_PI_2;
+            break; // to +y
+        case 5:
+            tx = 0.0;
+            ty = 0.0;
+            yaw_ = -M_PI_2;
+            break; // back center
+        case 6:
+            tx = 0.0;
+            ty = -k_extent;
+            yaw_ = -M_PI_2;
+            break; // to -y
+        default:
+            tx = 0.0;
+            ty = 0.0;
+            yaw_ = M_PI_2;
+            break; // back center
+        }
+
+        double const step = k_speed * dt;
+        step_towards(x_, tx, step);
+        step_towards(y_, ty, step);
+
+        if ((std::abs(x_ - tx) <= k_eps) && (std::abs(y_ - ty) <= k_eps))
+        {
+            patrol_leg_ = (patrol_leg_ + 1) % 8;
+        }
     }
 
     void publish_tf_()
@@ -486,12 +564,47 @@ private:
     {
         visualization_msgs::msg::MarkerArray markers;
 
-        auto make_marker = [&](int const id, float const x, float const y, std::string const &text,
-                               bool const active)
+        auto stamp = now();
+
+        // ---- robot body (visible cube) ----
+        {
+            visualization_msgs::msg::Marker body;
+            body.header.frame_id = "base_link";
+            body.header.stamp = stamp;
+            body.ns = "robot";
+            body.id = 1000;
+            body.type = visualization_msgs::msg::Marker::CUBE;
+            body.action = visualization_msgs::msg::Marker::ADD;
+
+            body.pose.position.x = 0.0;
+            body.pose.position.y = 0.0;
+            body.pose.position.z = 0.25;
+            body.pose.orientation.x = 0.0;
+            body.pose.orientation.y = 0.0;
+            body.pose.orientation.z = 0.0;
+            body.pose.orientation.w = 1.0;
+
+            body.scale.x = 0.6;
+            body.scale.y = 0.4;
+            body.scale.z = 0.5;
+
+            body.color.a = 1.0;
+            body.color.r = 0.2f;
+            body.color.g = 0.8f;
+            body.color.b = 1.0f;
+
+            body.lifetime = rclcpp::Duration::from_seconds(0.0); // forever
+            body.frame_locked = true;
+
+            markers.markers.push_back(body);
+        }
+
+        // ---- bt text markers ----
+        auto make_text = [&](int const id, float const x, float const y, std::string const &text, bool const active)
         {
             visualization_msgs::msg::Marker m;
-            m.header.frame_id = "map"; // now this exists because we publish tf. you're welcome.
-            m.header.stamp = now();
+            m.header.frame_id = "map";
+            m.header.stamp = stamp;
             m.ns = "bt";
             m.id = id;
             m.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
@@ -500,7 +613,10 @@ private:
             m.pose.position.x = x;
             m.pose.position.y = y;
             m.pose.position.z = 0.5;
+            m.pose.orientation.w = 1.0;
 
+            m.scale.x = 0.0;
+            m.scale.y = 0.0;
             m.scale.z = 0.3;
 
             m.color.a = 1.0;
@@ -509,20 +625,24 @@ private:
             m.color.b = active ? 0.0f : 0.7f;
 
             m.text = text;
+
+            m.lifetime = rclcpp::Duration::from_seconds(0.0); // forever
+            m.frame_locked = false;
+
             return m;
         };
 
         int id = 0;
-        markers.markers.push_back(make_marker(id++, 0.0f, 3.0f, "ROOT (||)", false));
-        markers.markers.push_back(make_marker(id++, -3.0f, 2.0f, "Emergency", ctx_.active_node == "HALT"));
-        markers.markers.push_back(make_marker(
+        markers.markers.push_back(make_text(id++, 0.0f, 3.0f, "ROOT (||)", false));
+        markers.markers.push_back(make_text(id++, -3.0f, 2.0f, "Emergency", ctx_.active_node == "HALT"));
+        markers.markers.push_back(make_text(
             id++, -1.0f, 2.0f, "LowBatt",
             (ctx_.active_node == "Charge") || (ctx_.active_node == "GoToCharger")));
-        markers.markers.push_back(make_marker(
+        markers.markers.push_back(make_text(
             id++, 1.0f, 2.0f, "Patrol",
             (ctx_.active_node == "Navigate") || (ctx_.active_node == "Avoid")));
-        markers.markers.push_back(make_marker(id++, 3.0f, 2.0f, "Idle", ctx_.active_node == "Idle"));
-        markers.markers.push_back(make_marker(id++, 0.0f, 0.0f, "[" + ctx_.active_node + "]", true));
+        markers.markers.push_back(make_text(id++, 3.0f, 2.0f, "Idle", ctx_.active_node == "Idle"));
+        markers.markers.push_back(make_text(id++, 0.0f, 0.0f, "[" + ctx_.active_node + "]", true));
 
         marker_pub_->publish(markers);
     }
@@ -546,6 +666,10 @@ private:
     double x_ = 0.0;
     double y_ = 0.0;
     double yaw_ = 0.0;
+
+    // box path state
+    int box_leg_ = 0; // 0:+x, 1:+y, 2:-x, 3:-y
+    int patrol_leg_ = 0;
 
     // ros2 interfaces
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
