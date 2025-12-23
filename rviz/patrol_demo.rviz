@@ -1,0 +1,35 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Fixed Frame: map
+
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Name: TF
+
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: BehaviorTree
+      Topic:
+        Value: /bt_markers
+      Namespaces:
+        bt: true
+        robot: true
+
+    - Class: rviz_default_plugins/RobotModel
+      Enabled: true
+      Name: RobotModel
+      Robot Description: robot_description
+
+Window Geometry:
+  Width: 1200
+  Height: 800
