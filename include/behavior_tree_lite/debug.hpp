@@ -11,7 +11,7 @@ namespace bt
     namespace internal
     {
 
-        // Compile-time type name extraction (GCC/Clang/MSVC)
+        // Compile-time type name extraction
         template <typename T>
         constexpr std::string_view get_type_name()
         {
@@ -31,7 +31,6 @@ namespace bt
             return "UnknownType";
 #endif
 
-            // Simple parsing to extract T
             auto start = name.find(prefix);
             if (start == std::string_view::npos)
                 return "Unknown";
@@ -41,16 +40,18 @@ namespace bt
             if (end == std::string_view::npos)
                 return name.substr(start);
 
-            // Strip "struct " or "class " prefix if present
             auto type_str = name.substr(start, end - start);
+
+            // Clean up "struct" / "class" prefixes
             if (type_str.starts_with("struct "))
                 type_str.remove_prefix(7);
             if (type_str.starts_with("class "))
                 type_str.remove_prefix(6);
 
-            // Strip namespaces for cleaner output (optional)
-            // auto last_col = type_str.find_last_of(':');
-            // if (last_col != std::string_view::npos) type_str.remove_prefix(last_col + 1);
+            // Clean up GCC verbose output (e.g., "; std::string_view = ...")
+            auto semi = type_str.find(';');
+            if (semi != std::string_view::npos)
+                type_str = type_str.substr(0, semi);
 
             return type_str;
         }
