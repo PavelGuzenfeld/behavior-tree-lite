@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
-project(behavior_tree_lite VERSION 0.0.1 LANGUAGES CXX)
+project(behavior_tree_lite VERSION 0.3.0 LANGUAGES CXX)
 
 # ==========================================
 # OPTIONS
 # ==========================================
 option(BUILD_TESTING "Build unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_BENCHMARKS "Build performance benchmarks" OFF)
 
 # ==========================================
 # C++ STANDARD
@@ -134,6 +135,15 @@ if(BUILD_TESTING)
       add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
     endif()
   endif()
+endif()
+
+# ==========================================
+# BENCHMARKS
+# ==========================================
+if(BUILD_BENCHMARKS)
+  add_executable(${PROJECT_NAME}_bench test/bench_tree.cpp)
+  target_link_libraries(${PROJECT_NAME}_bench ${PROJECT_NAME})
+  target_compile_options(${PROJECT_NAME}_bench PRIVATE -O3 -DNDEBUG)
 endif()
 
 # ==========================================

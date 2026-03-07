@@ -87,8 +87,7 @@ int main()
 
     // === NEW LOGICAL SYNTAX ===
     // Added outer parentheses to silence -Wparentheses warning
-    auto tree =
-        (CheckBattery{} && (Scan{} || Attack{})) || RunAway{};
+    auto tree = (CheckBattery{} && (Scan{} || Attack{})) || RunAway{};
 
     // === DEBUG PRINT ===
     std::cout << "=== Behavior Tree Structure ===\n";

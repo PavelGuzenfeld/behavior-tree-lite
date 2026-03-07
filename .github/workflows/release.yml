@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ==========================================
+  # VALIDATE BEFORE RELEASE
+  # ==========================================
+  validate:
+    uses: ./.github/workflows/ci.yml
+
+  # ==========================================
+  # CREATE GITHUB RELEASE
+  # ==========================================
+  release:
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify version matches CMakeLists.txt
+        run: |
+          cmake_version=$(grep -oP 'project\(behavior_tree_lite VERSION \K[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt)
+          tag_version="${{ steps.version.outputs.VERSION }}"
+          if [ "$cmake_version" != "$tag_version" ]; then
+            echo "Version mismatch: CMakeLists.txt=$cmake_version, tag=$tag_version"
+            exit 1
+          fi
+          echo "Version verified: $tag_version"
+
+      - name: Package headers
+        run: |
+          tar czf behavior_tree_lite-${{ steps.version.outputs.VERSION }}.tar.gz \
+            include/ CMakeLists.txt cmake/ package.xml LICENSE README.md
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: behavior_tree_lite-${{ steps.version.outputs.VERSION }}.tar.gz

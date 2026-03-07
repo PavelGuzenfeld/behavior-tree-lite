@@ -1,6 +1,6 @@
 # behavior_tree_lite
 
-A lightweight, header-only, compile-time behavior tree library for C++23/26.
+A lightweight, header-only, compile-time behavior tree library for C++23.
 
 ## Features
 
@@ -284,6 +284,7 @@ make_parallel<E, C>(children...)   // Create Parallel
 make_inverter<E, C>(child)         // Create Inverter
 make_retry<E, C>(attempts, child)  // Create Retry
 make_repeat<E, C>(count, child)    // Create Repeat (-1 = infinite)
+make_guard<E, C>(predicate, child) // Create Guard (conditional)
 ```
 
 ### Node Types
@@ -316,6 +317,33 @@ AlwaysFailure<E, C>{}
 AlwaysRunning<E, C>{}
 ```
 
+## Performance
+
+All compile-time composed nodes are fully inlined — zero overhead vs hand-written code. Benchmarks run on every CI push (`BUILD_BENCHMARKS=ON`).
+
+| Benchmark | ns/op |
+|-----------|------:|
+| Single Action node | ~0.1 |
+| DynamicAction (std::function) | ~1.5 |
+| AlwaysSuccess (stateless) | ~0.1 |
+| Sequence (3 children) | ~0.1 |
+| Selector (2 children) | ~0.5 |
+| Parallel (3 children) | ~0.1 |
+| Inverter(Action) | ~0.1 |
+| Guard(predicate, Action) | ~0.1 |
+| DSL tree: (Check && Action) \|\| Fallback | ~0.9 |
+| 5-level nested tree | ~0.9 |
+| Sequence with Running child (resume) | ~0.8 |
+| std::visit variant dispatch | ~0.2 |
+
+> Measured on GCC 15 -O3, 1M iterations. `DynamicAction` (~1.5ns) is the only node with measurable overhead due to `std::function` indirection — all template-based nodes are sub-nanosecond.
+
+## Thread Safety
+
+This library is **not thread-safe**. All tree nodes maintain mutable state (e.g., `current_index`, tick counters) that is not synchronized. This is by design — behavior trees are typically ticked from a single thread (game loop, ROS2 timer callback, etc.).
+
+If you need to access a tree from multiple threads, provide your own external synchronization (e.g., a mutex around `process()` calls).
+
 ## Requirements
 
 - C++23 or later
@@ -324,7 +352,7 @@ AlwaysRunning<E, C>{}
 - ROS2 Humble/Jazzy (optional, for ROS2 integration)
 
 ## Roadmap
-See [ROADMAP.md](ROADMAP.md) for the detailed development plan. Upcoming v0.0.2 features include:
+See [ROADMAP.md](ROADMAP.md) for the detailed development plan.
 
 ## License
 

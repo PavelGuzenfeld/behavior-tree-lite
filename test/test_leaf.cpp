@@ -21,18 +21,13 @@ namespace
         bool flag = false;
     };
 
-    template <typename E, typename C>
-    struct DynamicCondition : NodeBase
+    template <typename E, typename C> struct DynamicCondition : NodeBase
     {
         std::function<bool(const E &, const C &)> predicate;
 
-        explicit DynamicCondition(std::function<bool(const E &, const C &)> pred)
-            : predicate(std::move(pred)) {}
+        explicit DynamicCondition(std::function<bool(const E &, const C &)> pred) : predicate(std::move(pred)) {}
 
-        Status process(const E &e, C &ctx)
-        {
-            return predicate(e, ctx) ? Status::Success : Status::Failure;
-        }
+        Status process(const E &e, C &ctx) { return predicate(e, ctx) ? Status::Success : Status::Failure; }
         void reset() {}
     };
 
@@ -70,11 +65,8 @@ namespace
 
         bool reset_called = false;
 
-        DynamicAction<TestEvent, TestContext> action(
-            [](const TestEvent &, TestContext &)
-            { return Status::Success; },
-            [&]()
-            { reset_called = true; });
+        DynamicAction<TestEvent, TestContext> action([](const TestEvent &, TestContext &) { return Status::Success; },
+                                                     [&]() { reset_called = true; });
 
         action.reset();
 
@@ -128,9 +120,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        DynamicCondition<TestEvent, TestContext> cond(
-            [](const TestEvent &, const TestContext &)
-            { return true; });
+        DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &, const TestContext &) { return true; });
 
         auto result = cond.process(evt, ctx);
         EXPECT_EQ(result, Status::Success);
@@ -141,9 +131,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        DynamicCondition<TestEvent, TestContext> cond(
-            [](const TestEvent &, const TestContext &)
-            { return false; });
+        DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &, const TestContext &) { return false; });
 
         auto result = cond.process(evt, ctx);
         EXPECT_EQ(result, Status::Failure);
@@ -155,9 +143,7 @@ namespace
         ctx.flag = true;
         TestEvent evt;
 
-        DynamicCondition<TestEvent, TestContext> cond(
-            [](const TestEvent &, const TestContext &c)
-            { return c.flag; });
+        DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &, const TestContext &c) { return c.flag; });
 
         EXPECT_EQ(cond.process(evt, ctx), Status::Success);
 
@@ -170,9 +156,8 @@ namespace
         TestContext ctx;
         TestEvent evt{50};
 
-        DynamicCondition<TestEvent, TestContext> cond(
-            [](const TestEvent &e, const TestContext &)
-            { return e.value > 25; });
+        DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &e, const TestContext &)
+                                                      { return e.value > 25; });
 
         EXPECT_EQ(cond.process(evt, ctx), Status::Success);
 
@@ -185,13 +170,10 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        DynamicCondition<TestEvent, TestContext> cond_true(
-            [](const TestEvent &, const TestContext &)
-            { return true; });
+        DynamicCondition<TestEvent, TestContext> cond_true([](const TestEvent &, const TestContext &) { return true; });
 
-        DynamicCondition<TestEvent, TestContext> cond_false(
-            [](const TestEvent &, const TestContext &)
-            { return false; });
+        DynamicCondition<TestEvent, TestContext> cond_false([](const TestEvent &, const TestContext &)
+                                                            { return false; });
 
         EXPECT_NE(cond_true.process(evt, ctx), Status::Running);
         EXPECT_NE(cond_false.process(evt, ctx), Status::Running);

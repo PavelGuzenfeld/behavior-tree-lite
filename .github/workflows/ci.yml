@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 env:
   BUILD_TYPE: Release
@@ -18,12 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ros_distro: [humble, jazzy]
         include:
-          - ros_distro: humble
-            os: ubuntu-22.04
-          - ros_distro: jazzy
-            os: ubuntu-24.04
           - ros_distro: jazzy
             os: ubuntu-24.04
 
@@ -38,16 +34,19 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y python3-colcon-common-extensions python3-rosdep
+          apt-get install -y python3-colcon-common-extensions python3-rosdep g++-14
           rosdep update --rosdistro ${{ matrix.ros_distro }}
           rosdep install --from-paths . --ignore-src -y
 
       - name: Build
+        shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          export CC=gcc-14 CXX=g++-14
+          colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_CXX_STANDARD=23
 
       - name: Test
+        shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           source install/setup.bash
@@ -61,25 +60,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
-        compiler: [gcc, clang]
         include:
-          - os: ubuntu-22.04
-            compiler: gcc
-            cc: gcc-11
-            cxx: g++-11
-          - os: ubuntu-22.04
-            compiler: clang
-            cc: clang-14
-            cxx: clang++-14
           - os: ubuntu-24.04
             compiler: gcc
-            cc: gcc-13
-            cxx: g++-13
+            cc: gcc-14
+            cxx: g++-14
+            pkg: g++-14
           - os: ubuntu-24.04
             compiler: clang
             cc: clang-18
             cxx: clang++-18
+            pkg: clang-18
 
     runs-on: ${{ matrix.os }}
 
@@ -90,8 +81,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build libgtest-dev
-          # Build gtest
+          sudo apt-get install -y cmake ninja-build libgtest-dev ${{ matrix.pkg }}
           cd /usr/src/gtest
           sudo cmake -B build -G Ninja
           sudo cmake --build build
@@ -114,6 +104,95 @@ jobs:
         run: ctest --test-dir build --output-on-failure
 
   # ==========================================
+  # SANITIZERS (ASan + UBSan)
+  # ==========================================
+  sanitizers:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build libgtest-dev g++-14
+          cd /usr/src/gtest
+          sudo cmake -B build -G Ninja
+          sudo cmake --build build
+          sudo cmake --install build
+
+      - name: Configure with sanitizers
+        env:
+          CC: gcc-14
+          CXX: g++-14
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+            -DBUILD_TESTING=ON \
+            -DBUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test under sanitizers
+        run: ctest --test-dir build --output-on-failure
+
+  # ==========================================
+  # PERFORMANCE BENCHMARKS
+  # ==========================================
+  benchmarks:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++-14
+
+      - name: Configure
+        env:
+          CC: gcc-14
+          CXX: g++-14
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=OFF \
+            -DBUILD_BENCHMARKS=ON \
+            -DBUILD_EXAMPLES=OFF
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run benchmarks
+        run: ./build/behavior_tree_lite_bench
+
+  # ==========================================
+  # FORMAT CHECK
+  # ==========================================
+  format-check:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-18
+
+      - name: Check formatting
+        run: |
+          find include test examples -name '*.hpp' -o -name '*.cpp' | \
+            xargs clang-format-18 --dry-run --Werror
+
+  # ==========================================
   # STATIC ANALYSIS
   # ==========================================
   static-analysis:
@@ -123,12 +202,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install clang-tidy
+      - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy-18
+          sudo apt-get install -y clang-tidy-18 clang-18 cmake
 
       - name: Configure
+        env:
+          CC: clang-18
+          CXX: clang++-18
         run: |
           cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
@@ -138,8 +220,7 @@ jobs:
             -p build \
             --warnings-as-errors='*' \
             include/behavior_tree_lite/*.hpp \
-            include/behavior_tree_lite/nodes/*.hpp \
-            || true  # Don't fail on warnings for now
+            include/behavior_tree_lite/nodes/*.hpp
 
   # ==========================================
   # DOCUMENTATION CHECK
@@ -152,17 +233,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check README
-        run: |
-          if [ ! -f README.md ]; then
-            echo "README.md not found!"
-            exit 1
-          fi
-          echo "README.md exists"
+        run: test -f README.md
 
       - name: Check LICENSE
-        run: |
-          if [ ! -f LICENSE ]; then
-            echo "LICENSE not found!"
-            exit 1
-          fi
-          echo "LICENSE exists"
+        run: test -f LICENSE
