@@ -12,8 +12,7 @@ namespace bt
     {
 
         // Compile-time type name extraction
-        template <typename T>
-        constexpr std::string_view get_type_name()
+        template <typename T> constexpr std::string_view get_type_name()
         {
 #if defined(__clang__)
             std::string_view name = __PRETTY_FUNCTION__;
@@ -25,7 +24,8 @@ namespace bt
             std::string_view suffix = "]";
 #elif defined(_MSC_VER)
             std::string_view name = __FUNCSIG__;
-            std::string_view prefix = "class std::basic_string_view<char,struct std::char_traits<char> > __cdecl bt::internal::get_type_name<";
+            std::string_view prefix = "class std::basic_string_view<char,struct std::char_traits<char> > __cdecl "
+                                      "bt::internal::get_type_name<";
             std::string_view suffix = ">(void)";
 #else
             return "UnknownType";
@@ -57,12 +57,10 @@ namespace bt
         }
 
         // Printer helper struct
-        template <typename T>
-        struct NodePrinter;
+        template <typename T> struct NodePrinter;
 
         // Forward decl
-        template <typename T>
-        void print_tree_impl(const T &node, int indent, std::ostream &os);
+        template <typename T> void print_tree_impl(const T &node, int indent, std::ostream &os);
 
         inline void print_indent(int indent, std::ostream &os)
         {
@@ -72,46 +70,42 @@ namespace bt
 
         // --- Composite Printers ---
 
-        template <typename E, typename C, typename... Children>
-        struct NodePrinter<Sequence<E, C, Children...>>
+        template <typename E, typename C, typename... Children> struct NodePrinter<Sequence<E, C, Children...>>
         {
             static void print(const Sequence<E, C, Children...> &node, int indent, std::ostream &os)
             {
                 print_indent(indent, os);
                 os << "Sequence\n";
-                std::apply([&](const auto &...children)
-                           { (print_tree_impl(children, indent + 1, os), ...); }, node.children);
+                std::apply([&](const auto &...children) { (print_tree_impl(children, indent + 1, os), ...); },
+                           node.children);
             }
         };
 
-        template <typename E, typename C, typename... Children>
-        struct NodePrinter<Selector<E, C, Children...>>
+        template <typename E, typename C, typename... Children> struct NodePrinter<Selector<E, C, Children...>>
         {
             static void print(const Selector<E, C, Children...> &node, int indent, std::ostream &os)
             {
                 print_indent(indent, os);
                 os << "Selector\n";
-                std::apply([&](const auto &...children)
-                           { (print_tree_impl(children, indent + 1, os), ...); }, node.children);
+                std::apply([&](const auto &...children) { (print_tree_impl(children, indent + 1, os), ...); },
+                           node.children);
             }
         };
 
-        template <typename E, typename C, typename... Children>
-        struct NodePrinter<Parallel<E, C, Children...>>
+        template <typename E, typename C, typename... Children> struct NodePrinter<Parallel<E, C, Children...>>
         {
             static void print(const Parallel<E, C, Children...> &node, int indent, std::ostream &os)
             {
                 print_indent(indent, os);
                 os << "Parallel\n";
-                std::apply([&](const auto &...children)
-                           { (print_tree_impl(children, indent + 1, os), ...); }, node.children);
+                std::apply([&](const auto &...children) { (print_tree_impl(children, indent + 1, os), ...); },
+                           node.children);
             }
         };
 
         // --- Decorator Printers ---
 
-        template <typename E, typename C, typename Child>
-        struct NodePrinter<Inverter<E, C, Child>>
+        template <typename E, typename C, typename Child> struct NodePrinter<Inverter<E, C, Child>>
         {
             static void print(const Inverter<E, C, Child> &node, int indent, std::ostream &os)
             {
@@ -121,8 +115,7 @@ namespace bt
             }
         };
 
-        template <typename E, typename C, typename Child>
-        struct NodePrinter<Retry<E, C, Child>>
+        template <typename E, typename C, typename Child> struct NodePrinter<Retry<E, C, Child>>
         {
             static void print(const Retry<E, C, Child> &node, int indent, std::ostream &os)
             {
@@ -132,8 +125,7 @@ namespace bt
             }
         };
 
-        template <typename E, typename C, typename Child>
-        struct NodePrinter<Repeat<E, C, Child>>
+        template <typename E, typename C, typename Child> struct NodePrinter<Repeat<E, C, Child>>
         {
             static void print(const Repeat<E, C, Child> &node, int indent, std::ostream &os)
             {
@@ -143,8 +135,7 @@ namespace bt
             }
         };
 
-        template <typename E, typename C, typename Child>
-        struct NodePrinter<Timeout<E, C, Child>>
+        template <typename E, typename C, typename Child> struct NodePrinter<Timeout<E, C, Child>>
         {
             static void print(const Timeout<E, C, Child> &node, int indent, std::ostream &os)
             {
@@ -154,8 +145,7 @@ namespace bt
             }
         };
 
-        template <typename E, typename C, typename Child>
-        struct NodePrinter<Succeeder<E, C, Child>>
+        template <typename E, typename C, typename Child> struct NodePrinter<Succeeder<E, C, Child>>
         {
             static void print(const Succeeder<E, C, Child> &node, int indent, std::ostream &os)
             {
@@ -165,8 +155,7 @@ namespace bt
             }
         };
 
-        template <typename E, typename C, typename Child>
-        struct NodePrinter<Failer<E, C, Child>>
+        template <typename E, typename C, typename Child> struct NodePrinter<Failer<E, C, Child>>
         {
             static void print(const Failer<E, C, Child> &node, int indent, std::ostream &os)
             {
@@ -176,8 +165,7 @@ namespace bt
             }
         };
 
-        template <typename E, typename C, typename Pred, typename Child>
-        struct NodePrinter<Guard<E, C, Pred, Child>>
+        template <typename E, typename C, typename Pred, typename Child> struct NodePrinter<Guard<E, C, Pred, Child>>
         {
             static void print(const Guard<E, C, Pred, Child> &node, int indent, std::ostream &os)
             {
@@ -189,8 +177,7 @@ namespace bt
 
         // --- Leaf Printer (Catch-all for User Nodes) ---
 
-        template <typename T>
-        struct NodePrinter
+        template <typename T> struct NodePrinter
         {
             static void print(const T &, int indent, std::ostream &os)
             {
@@ -200,8 +187,7 @@ namespace bt
         };
 
         // Implementation trampoline
-        template <typename T>
-        void print_tree_impl(const T &node, int indent, std::ostream &os)
+        template <typename T> void print_tree_impl(const T &node, int indent, std::ostream &os)
         {
             NodePrinter<std::decay_t<T>>::print(node, indent, os);
         }
@@ -215,8 +201,7 @@ namespace bt
     /// @brief Prints a text-based graph of the behavior tree structure
     /// @param node The root node of the tree
     /// @param os Output stream (default: std::cout)
-    template <typename T>
-    void print_tree(const T &node, std::ostream &os = std::cout)
+    template <typename T> void print_tree(const T &node, std::ostream &os = std::cout)
     {
         internal::print_tree_impl(node, 0, os);
     }

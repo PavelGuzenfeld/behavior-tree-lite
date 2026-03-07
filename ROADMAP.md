@@ -2,9 +2,9 @@
 
 This document tracks the planned features, improvements, and known limitations of `behavior_tree_lite`.
 
-**Current Version:** 0.0.1
+**Current Version:** 0.3.0
 
-## 🚧 Upcoming Features (Targeting v0.0.2)
+## 🚧 Upcoming Features (Targeting v0.4.0)
 
 ### Core Library Refactoring
 - [ ] **Functor-based Nodes**: Replace `process()` with `operator()` to allow nodes to function as standard C++ callables.
@@ -21,8 +21,6 @@ This document tracks the planned features, improvements, and known limitations o
 
 ### DevOps & Quality
 - [ ] **Pre-commit Hooks**: Setup `pre-commit` for local linting.
-- [ ] **Linting**: Enforce `clang-format` and `clang-tidy` on all commits.
-- [ ] **Enhanced CI**: Update GitHub Actions to run full tests on Pull Requests and commits to `master`.
 
 ## 🔮 Future Backlog
 
@@ -31,7 +29,22 @@ This document tracks the planned features, improvements, and known limitations o
 
 ### Tooling
 - [ ] **Graphviz Export**: Add `to_dot()` to visualize the tree structure.
-- [ ] **Benchmarks**: Compare compile-time vs run-time composition performance.
+
+## ✅ Completed (v0.3.0)
+- [x] Performance benchmarks (`BUILD_BENCHMARKS=ON`) with `do_not_optimize` barrier.
+- [x] ASan + UBSan CI job (sanitizers).
+- [x] Benchmark CI job (runs on every push).
+- [x] GitHub Release workflow (`release.yml`): triggers on `v*` tags, validates version against CMakeLists.txt, creates release with header tarball.
+
+## ✅ Completed (v0.2.0)
+- [x] `make_guard` factory helper and full Guard test coverage.
+- [x] DynamicAction null-callback assertion.
+- [x] Parallel fail-fast behavior documented.
+- [x] `clang-format` enforcement in CI with `.clang-format` config.
+- [x] `clang-tidy` made blocking in CI (removed `|| true`).
+- [x] Edge case tests: single-child composites, deeply nested trees (82 tests total).
+- [x] Thread-safety constraints documented in README.
+- [x] Fixed duplicate CI matrix entry, stale C++26 references.
 
 ## ✅ Completed (v0.0.1)
 - [x] Initial header-only library structure.

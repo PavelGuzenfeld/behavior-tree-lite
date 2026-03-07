@@ -32,12 +32,12 @@ namespace
     {
         std::variant<int, double, std::string> v = 42;
 
-        auto result = std::visit(overloaded{[](int i)
-                                            { return std::string("int: ") + std::to_string(i); },
-                                            [](double d)
-                                            { return std::string("double: ") + std::to_string(d); },
+        auto result = std::visit(overloaded{[](int i) { return std::string("int: ") + std::to_string(i); },
+                                            [](double d) { return std::string("double: ") + std::to_string(d); },
                                             [](const std::string &s)
-                                            { return std::string("string: ") + s; }},
+                                            {
+                                                return std::string("string: ") + s;
+                                            }},
                                  v);
 
         EXPECT_EQ(result, "int: 42");

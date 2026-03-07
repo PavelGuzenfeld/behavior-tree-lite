@@ -11,8 +11,7 @@ namespace bt
     // INVERTER (NOT)
     // ==========================================
 
-    template <typename Event, typename Context, IsNode<Event, Context> Child>
-    struct Inverter : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context> Child> struct Inverter : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -45,8 +44,7 @@ namespace bt
     // ==========================================
     // Retries child N times on failure.
 
-    template <typename Event, typename Context, IsNode<Event, Context> Child>
-    struct Retry : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context> Child> struct Retry : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -55,8 +53,7 @@ namespace bt
         int max_attempts;
         int attempts = 0;
 
-        constexpr Retry(int n, Child c)
-            : child(std::move(c)), max_attempts(n) {}
+        constexpr Retry(int n, Child c) : child(std::move(c)), max_attempts(n) {}
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
@@ -83,8 +80,7 @@ namespace bt
     // ==========================================
     // Repeats child N times (or forever if N < 0).
 
-    template <typename Event, typename Context, IsNode<Event, Context> Child>
-    struct Repeat : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context> Child> struct Repeat : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -93,8 +89,7 @@ namespace bt
         int max_iterations;
         int completed = 0;
 
-        constexpr Repeat(int iterations, Child c)
-            : child(std::move(c)), max_iterations(iterations) {}
+        constexpr Repeat(int iterations, Child c) : child(std::move(c)), max_iterations(iterations) {}
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
@@ -134,8 +129,7 @@ namespace bt
     // ==========================================
     // Always returns Success (wraps child result).
 
-    template <typename Event, typename Context, IsNode<Event, Context> Child>
-    struct Succeeder : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context> Child> struct Succeeder : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -158,8 +152,7 @@ namespace bt
     // ==========================================
     // Always returns Failure (wraps child result).
 
-    template <typename Event, typename Context, IsNode<Event, Context> Child>
-    struct Failer : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context> Child> struct Failer : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -182,8 +175,7 @@ namespace bt
     // ==========================================
     // Fails if child doesn't complete within N ticks.
 
-    template <typename Event, typename Context, IsNode<Event, Context> Child>
-    struct Timeout : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context> Child> struct Timeout : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -192,8 +184,7 @@ namespace bt
         int max_ticks;
         int ticks = 0;
 
-        constexpr Timeout(int n, Child c)
-            : child(std::move(c)), max_ticks(n) {}
+        constexpr Timeout(int n, Child c) : child(std::move(c)), max_ticks(n) {}
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {

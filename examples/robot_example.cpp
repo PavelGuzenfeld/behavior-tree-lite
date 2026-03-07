@@ -80,10 +80,11 @@ struct ScanForEnemy : NodeBase
                                          std::cout << "  [Scan] Enemy detected at " << en.dist << "m!\n";
                                          return Status::Success;
                                      },
-                                     [](const TickEvent &)
-                                     { return Status::Running; },
+                                     [](const TickEvent &) { return Status::Running; },
                                      [](const auto &)
-                                     { return Status::Running; }},
+                                     {
+                                         return Status::Running;
+                                     }},
                           e);
     }
     void reset() {}
@@ -157,21 +158,14 @@ int main()
     */
 
     Selector<Event, Context,
-             Sequence<Event, Context, CheckBattery,
-                      Retry<Event, Context, ScanForEnemy>,
+             Sequence<Event, Context, CheckBattery, Retry<Event, Context, ScanForEnemy>,
                       Parallel<Event, Context, MoveToCover, FireWeapon>>,
              EmergencySiren>
-        root(
-            Sequence<Event, Context,
-                     CheckBattery,
-                     Retry<Event, Context, ScanForEnemy>,
-                     Parallel<Event, Context, MoveToCover, FireWeapon>>(
-                CheckBattery{},
-                Retry<Event, Context, ScanForEnemy>(2, ScanForEnemy{}),
-                Parallel<Event, Context, MoveToCover, FireWeapon>(
-                    MoveToCover{},
-                    FireWeapon{})),
-            EmergencySiren{});
+        root(Sequence<Event, Context, CheckBattery, Retry<Event, Context, ScanForEnemy>,
+                      Parallel<Event, Context, MoveToCover, FireWeapon>>(
+                 CheckBattery{}, Retry<Event, Context, ScanForEnemy>(2, ScanForEnemy{}),
+                 Parallel<Event, Context, MoveToCover, FireWeapon>(MoveToCover{}, FireWeapon{})),
+             EmergencySiren{});
 
     Context ctx;
 
