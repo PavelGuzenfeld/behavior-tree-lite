@@ -62,7 +62,8 @@ struct CheckBattery : NodeBase
                                       std::cout << "  [Battery] CRITICAL: " << ctx.battery << "%\n";
                                   }
                               },
-                              [](const auto &) {}},
+                              [](const auto &) {
+                              }},
                    e);
         return (ctx.battery < 20) ? Status::Failure : Status::Success;
     }

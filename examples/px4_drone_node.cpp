@@ -245,7 +245,8 @@ struct CheckArmed : NodeBase
                                   ctx.nav_state = s.nav_state;
                                   ctx.pre_flight_ok = s.pre_flight_checks_pass;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckArmed";
@@ -283,7 +284,8 @@ struct CheckBattery : NodeBase
                                   ctx.battery_remaining = b.remaining;
                                   ctx.battery_current = b.current;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckBattery";
@@ -308,7 +310,8 @@ struct CheckGeofence : NodeBase
                                   ctx.vy = p.vy;
                                   ctx.vz = p.vz;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckGeofence";
@@ -329,7 +332,8 @@ struct CheckObstacleClear : NodeBase
                                   ctx.obstacle_distance = o.min_distance;
                                   ctx.obstacle_angle = o.angle;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckObstacle";
@@ -920,8 +924,7 @@ class PX4DroneNode : public rclcpp::Node
 
         status_sub_ = create_subscription<VehicleStatus>(
             "/fmu/out/vehicle_status", qos,
-            [this](VehicleStatus::SharedPtr msg)
-            {
+            [this](VehicleStatus::SharedPtr msg) {
                 events_.push_back(VehicleStatusUpdate{msg->arming_state, msg->nav_state, msg->pre_flight_checks_pass});
             });
 
@@ -1082,8 +1085,7 @@ class PX4DroneNode : public rclcpp::Node
         std::cout << "│ Position (NED): x=" << std::setw(7) << std::setprecision(2) << ctx_.x << " y=" << std::setw(7)
                   << ctx_.y << " z=" << std::setw(7) << ctx_.z << "           │\n";
 
-        std::cout << "│ Altitude AGL:   " << std::setw(6) << (-ctx_.z) << "m"
-                  << "    Velocity: " << std::setw(5)
+        std::cout << "│ Altitude AGL:   " << std::setw(6) << (-ctx_.z) << "m" << "    Velocity: " << std::setw(5)
                   << std::sqrt(ctx_.vx * ctx_.vx + ctx_.vy * ctx_.vy + ctx_.vz * ctx_.vz) << " m/s          │\n";
 
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
@@ -1100,8 +1102,7 @@ class PX4DroneNode : public rclcpp::Node
         // Geofence & Obstacle
         float const horiz_dist = std::sqrt(ctx_.x * ctx_.x + ctx_.y * ctx_.y);
         std::cout << "│ Geofence: " << std::setw(5) << horiz_dist << "/" << std::setw(5) << ctx_.geofence_radius << "m"
-                  << "   Obstacle: " << std::setw(5) << ctx_.obstacle_distance << "m"
-                  << "              │\n";
+                  << "   Obstacle: " << std::setw(5) << ctx_.obstacle_distance << "m" << "              │\n";
 
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
 

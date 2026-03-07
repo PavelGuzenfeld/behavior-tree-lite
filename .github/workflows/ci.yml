@@ -41,11 +41,13 @@ jobs:
           rosdep install --from-paths . --ignore-src -y
 
       - name: Build
+        shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
 
       - name: Test
+        shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           source install/setup.bash

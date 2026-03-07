@@ -49,8 +49,6 @@ namespace bt
         constexpr void reset() {}
     };
 
-    template <typename E, typename C, typename F> Action(F) -> Action<E, C, F>;
-
     // ==========================================
     // STATEFUL ACTION
     // ==========================================
@@ -81,8 +79,6 @@ namespace bt
         }
     };
 
-    template <typename E, typename C, typename S, typename F> StatefulAction(S, F) -> StatefulAction<E, C, S, F>;
-
     // ==========================================
     // CONDITION
     // ==========================================
@@ -106,8 +102,6 @@ namespace bt
 
         constexpr void reset() {}
     };
-
-    template <typename E, typename C, typename P> Condition(P) -> Condition<E, C, P>;
 
     // ==========================================
     // ALWAYS SUCCESS

@@ -36,9 +36,6 @@ namespace bt
         constexpr void reset() { child.reset(); }
     };
 
-    template <typename Event, typename Context, IsNode<Event, Context> Child>
-    Inverter(Child) -> Inverter<Event, Context, Child>;
-
     // ==========================================
     // RETRY
     // ==========================================
@@ -233,8 +230,5 @@ namespace bt
 
         constexpr void reset() { child.reset(); }
     };
-
-    template <typename Event, typename Context, typename P, IsNode<Event, Context> C>
-    Guard(P, C) -> Guard<Event, Context, P, C>;
 
 } // namespace bt

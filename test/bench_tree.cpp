@@ -215,7 +215,10 @@ int main()
         {
             Status process(const Event &e, Context &ctx)
             {
-                std::visit(overloaded{[&](const TickEvent &) { ctx.counter++; }, [](const SensorEvent &) {}}, e);
+                std::visit(overloaded{[&](const TickEvent &) { ctx.counter++; },
+                                      [](const SensorEvent &) {
+                                      }},
+                           e);
                 return Status::Success;
             }
             void reset() {}
