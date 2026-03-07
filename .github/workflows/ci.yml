@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y python3-colcon-common-extensions python3-rosdep
+          apt-get install -y python3-colcon-common-extensions python3-rosdep g++-14
           rosdep update --rosdistro ${{ matrix.ros_distro }}
           rosdep install --from-paths . --ignore-src -y
 
@@ -42,6 +42,7 @@ jobs:
         shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          export CC=gcc-14 CXX=g++-14
           colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_CXX_STANDARD=23
 
       - name: Test
