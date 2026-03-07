@@ -46,9 +46,9 @@ namespace
 
         Status process(const Event &e, RobotContext &ctx)
         {
-            std::visit(overloaded{[&](const BatteryEvent &b)
-                                  { ctx.battery = b.voltage; },
-                                  [](const auto &) {}},
+            std::visit(overloaded{[&](const BatteryEvent &b) { ctx.battery = b.voltage; },
+                                  [](const auto &) {
+                                  }},
                        e);
             return (ctx.battery >= threshold) ? Status::Success : Status::Failure;
         }

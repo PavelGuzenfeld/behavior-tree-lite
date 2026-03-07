@@ -93,9 +93,9 @@ struct CheckBattery : NodeBase
 
     Status process(Event const &e, RobotContext &ctx)
     {
-        std::visit(overloaded{[&](BatteryUpdate const &b)
-                              { ctx.battery_level = b.level; },
-                              [](auto const &) {}},
+        std::visit(overloaded{[&](BatteryUpdate const &b) { ctx.battery_level = b.level; },
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckBattery";
@@ -114,9 +114,9 @@ struct CheckObstacle : NodeBase
 
     Status process(Event const &e, RobotContext &ctx)
     {
-        std::visit(overloaded{[&](LaserUpdate const &l)
-                              { ctx.obstacle_distance = l.min_distance; },
-                              [](auto const &) {}},
+        std::visit(overloaded{[&](LaserUpdate const &l) { ctx.obstacle_distance = l.min_distance; },
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckObstacle";
@@ -133,9 +133,9 @@ struct CheckEmergency : NodeBase
 
     Status process(Event const &e, RobotContext &ctx)
     {
-        std::visit(overloaded{[&](EmergencyStop const &)
-                              { ctx.emergency = true; },
-                              [](auto const &) {}},
+        std::visit(overloaded{[&](EmergencyStop const &) { ctx.emergency = true; },
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckEmergency";

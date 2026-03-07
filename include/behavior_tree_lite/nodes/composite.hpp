@@ -60,10 +60,6 @@ namespace bt
         }
     };
 
-    // Deduction guide
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    Sequence(Children...) -> Sequence<Event, Context, Children...>;
-
     // ==========================================
     // SELECTOR (OR / Fallback)
     // ==========================================
@@ -114,9 +110,6 @@ namespace bt
             std::apply([](auto &...c) { (c.reset(), ...); }, children);
         }
     };
-
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    Selector(Children...) -> Selector<Event, Context, Children...>;
 
     // ==========================================
     // PARALLEL (Concurrent)
@@ -188,8 +181,5 @@ namespace bt
             std::apply([](auto &...c) { (c.reset(), ...); }, children);
         }
     };
-
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    Parallel(Children...) -> Parallel<Event, Context, Children...>;
 
 } // namespace bt
