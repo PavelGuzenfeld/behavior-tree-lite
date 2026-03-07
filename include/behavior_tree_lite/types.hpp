@@ -21,8 +21,7 @@ namespace bt
     };
 
     // Compile-time status names lookup
-    inline constexpr std::array<std::string_view, 3> status_names = {
-        "Success", "Failure", "Running"};
+    inline constexpr std::array<std::string_view, 3> status_names = {"Success", "Failure", "Running"};
 
     constexpr std::string_view to_string(Status s) noexcept
     {
@@ -59,13 +58,11 @@ namespace bt
     // HELPERS
     // ==========================================
 
-    template <class... Ts>
-    struct overloaded : Ts...
+    template <class... Ts> struct overloaded : Ts...
     {
         using Ts::operator()...;
     };
 
-    template <class... Ts>
-    overloaded(Ts...) -> overloaded<Ts...>;
+    template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 } // namespace bt

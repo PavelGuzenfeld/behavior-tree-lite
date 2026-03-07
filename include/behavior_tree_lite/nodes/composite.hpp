@@ -14,8 +14,7 @@ namespace bt
     // ==========================================
     // Runs children in order. Fails if one fails. Succeeds if ALL succeed.
 
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    struct Sequence : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context>... Children> struct Sequence : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -57,22 +56,16 @@ namespace bt
         constexpr void reset()
         {
             current_index = 0;
-            std::apply([](auto &...c)
-                       { (c.reset(), ...); }, children);
+            std::apply([](auto &...c) { (c.reset(), ...); }, children);
         }
     };
-
-    // Deduction guide
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    Sequence(Children...) -> Sequence<Event, Context, Children...>;
 
     // ==========================================
     // SELECTOR (OR / Fallback)
     // ==========================================
     // Runs children in order. Succeeds if one succeeds. Fails if ALL fail.
 
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    struct Selector : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context>... Children> struct Selector : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -114,21 +107,17 @@ namespace bt
         constexpr void reset()
         {
             current_index = 0;
-            std::apply([](auto &...c)
-                       { (c.reset(), ...); }, children);
+            std::apply([](auto &...c) { (c.reset(), ...); }, children);
         }
     };
-
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    Selector(Children...) -> Selector<Event, Context, Children...>;
 
     // ==========================================
     // PARALLEL (Concurrent)
     // ==========================================
     // Runs ALL children every tick. Succeeds if ALL succeed. Fails if ANY fail.
+    // Fail-fast: on failure, all children (including still-running ones) are reset.
 
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    struct Parallel : NodeBase
+    template <typename Event, typename Context, IsNode<Event, Context>... Children> struct Parallel : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -145,24 +134,31 @@ namespace bt
                 std::size_t successes = 0;
                 bool failed = false;
 
-                (([&]
-                  {
-                if (self.finished[Is]) { ++successes; return; }
+                ((
+                     [&]
+                     {
+                         if (self.finished[Is])
+                         {
+                             ++successes;
+                             return;
+                         }
 
-                auto& child = std::get<Is>(self.children);
-                switch (child.process(evt, ctx)) {
-                    case Status::Success:
-                        self.finished[Is] = true;
-                        child.reset();
-                        ++successes;
-                        break;
-                    case Status::Failure:
-                        failed = true;
-                        child.reset();
-                        break;
-                    case Status::Running:
-                        break;
-                } }()),
+                         auto &child = std::get<Is>(self.children);
+                         switch (child.process(evt, ctx))
+                         {
+                         case Status::Success:
+                             self.finished[Is] = true;
+                             child.reset();
+                             ++successes;
+                             break;
+                         case Status::Failure:
+                             failed = true;
+                             child.reset();
+                             break;
+                         case Status::Running:
+                             break;
+                         }
+                     }()),
                  ...);
 
                 if (failed)
@@ -182,12 +178,8 @@ namespace bt
         constexpr void reset()
         {
             finished.fill(false);
-            std::apply([](auto &...c)
-                       { (c.reset(), ...); }, children);
+            std::apply([](auto &...c) { (c.reset(), ...); }, children);
         }
     };
-
-    template <typename Event, typename Context, IsNode<Event, Context>... Children>
-    Parallel(Children...) -> Parallel<Event, Context, Children...>;
 
 } // namespace bt

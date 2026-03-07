@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../types.hpp"
+#include <cassert>
 #include <concepts>
 #include <functional>
 #include <type_traits>
@@ -48,16 +49,12 @@ namespace bt
         constexpr void reset() {}
     };
 
-    template <typename E, typename C, typename F>
-    Action(F) -> Action<E, C, F>;
-
     // ==========================================
     // STATEFUL ACTION
     // ==========================================
     // Action with internal state that resets.
 
-    template <typename Event, typename Context, typename State, typename F>
-    struct StatefulAction : NodeBase
+    template <typename Event, typename Context, typename State, typename F> struct StatefulAction : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -66,8 +63,7 @@ namespace bt
         State initial;
         [[no_unique_address]] F func;
 
-        constexpr StatefulAction(State init, F f)
-            : state(init), initial(init), func(std::move(f)) {}
+        constexpr StatefulAction(State init, F f) : state(init), initial(init), func(std::move(f)) {}
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
@@ -82,9 +78,6 @@ namespace bt
             }
         }
     };
-
-    template <typename E, typename C, typename S, typename F>
-    StatefulAction(S, F) -> StatefulAction<E, C, S, F>;
 
     // ==========================================
     // CONDITION
@@ -110,23 +103,16 @@ namespace bt
         constexpr void reset() {}
     };
 
-    template <typename E, typename C, typename P>
-    Condition(P) -> Condition<E, C, P>;
-
     // ==========================================
     // ALWAYS SUCCESS
     // ==========================================
 
-    template <typename Event, typename Context>
-    struct AlwaysSuccess : NodeBase
+    template <typename Event, typename Context> struct AlwaysSuccess : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
 
-        constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &)
-        {
-            return Status::Success;
-        }
+        constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &) { return Status::Success; }
         constexpr void reset() {}
     };
 
@@ -134,16 +120,12 @@ namespace bt
     // ALWAYS FAILURE
     // ==========================================
 
-    template <typename Event, typename Context>
-    struct AlwaysFailure : NodeBase
+    template <typename Event, typename Context> struct AlwaysFailure : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
 
-        constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &)
-        {
-            return Status::Failure;
-        }
+        constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &) { return Status::Failure; }
         constexpr void reset() {}
     };
 
@@ -151,16 +133,12 @@ namespace bt
     // ALWAYS RUNNING
     // ==========================================
 
-    template <typename Event, typename Context>
-    struct AlwaysRunning : NodeBase
+    template <typename Event, typename Context> struct AlwaysRunning : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
 
-        constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &)
-        {
-            return Status::Running;
-        }
+        constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &) { return Status::Running; }
         constexpr void reset() {}
     };
 
@@ -169,8 +147,7 @@ namespace bt
     // ==========================================
     // For runtime polymorphism when needed.
 
-    template <typename Event, typename Context>
-    struct DynamicAction : NodeBase
+    template <typename Event, typename Context> struct DynamicAction : NodeBase
     {
         using EventType = Event;
         using ContextType = Context;
@@ -181,8 +158,12 @@ namespace bt
         ProcessFn on_process;
         ResetFn on_reset;
 
-        explicit DynamicAction(ProcessFn process_fn, ResetFn reset_fn = [] {})
-            : on_process(std::move(process_fn)), on_reset(std::move(reset_fn)) {}
+        explicit DynamicAction(
+            ProcessFn process_fn, ResetFn reset_fn = [] {})
+            : on_process(std::move(process_fn)), on_reset(std::move(reset_fn))
+        {
+            assert(on_process && "DynamicAction requires a non-null process callback");
+        }
 
         Status process(const Event &e, Context &ctx) { return on_process(e, ctx); }
         void reset() { on_reset(); }

@@ -84,13 +84,8 @@ struct ObstacleUpdate
     float angle; // Direction of closest obstacle
 };
 
-using Event = std::variant<
-    TickEvent,
-    BatteryUpdate,
-    PositionUpdate,
-    LocalPositionUpdate,
-    VehicleStatusUpdate,
-    ObstacleUpdate>;
+using Event =
+    std::variant<TickEvent, BatteryUpdate, PositionUpdate, LocalPositionUpdate, VehicleStatusUpdate, ObstacleUpdate>;
 
 // ============================================================================
 // CONTEXT (Drone Blackboard)
@@ -170,8 +165,7 @@ struct DroneContext
         }
     }
 
-    void send_command(uint32_t cmd, float p1 = 0.0f, float p2 = 0.0f,
-                      float p3 = 0.0f, float p4 = 0.0f, float p5 = 0.0f,
+    void send_command(uint32_t cmd, float p1 = 0.0f, float p2 = 0.0f, float p3 = 0.0f, float p4 = 0.0f, float p5 = 0.0f,
                       float p6 = 0.0f, float p7 = 0.0f)
     {
         pending_command.command = cmd;
@@ -205,10 +199,7 @@ struct DroneContext
         return std::sqrt(dx * dx + dy * dy);
     }
 
-    [[nodiscard]] bool is_armed() const
-    {
-        return arming_state == VehicleStatus::ARMING_STATE_ARMED;
-    }
+    [[nodiscard]] bool is_armed() const { return arming_state == VehicleStatus::ARMING_STATE_ARMED; }
 
     [[nodiscard]] bool is_airborne() const
     {
@@ -219,9 +210,7 @@ struct DroneContext
     {
         float const horiz_dist = std::sqrt(x * x + y * y);
         float const agl = -z; // Convert NED to altitude
-        return horiz_dist < geofence_radius &&
-               agl < geofence_max_alt &&
-               agl > 0.0f;
+        return horiz_dist < geofence_radius && agl < geofence_max_alt && agl > 0.0f;
     }
 };
 
@@ -237,7 +226,7 @@ namespace px4_cmd
     constexpr uint32_t RTL = VehicleCommand::VEHICLE_CMD_NAV_RETURN_TO_LAUNCH;
     constexpr uint32_t SET_MODE = VehicleCommand::VEHICLE_CMD_DO_SET_MODE;
     constexpr uint32_t OFFBOARD = 6; // Custom mode for offboard
-}
+} // namespace px4_cmd
 
 // ============================================================================
 // CONDITION NODES
@@ -256,7 +245,8 @@ struct CheckArmed : NodeBase
                                   ctx.nav_state = s.nav_state;
                                   ctx.pre_flight_ok = s.pre_flight_checks_pass;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckArmed";
@@ -294,7 +284,8 @@ struct CheckBattery : NodeBase
                                   ctx.battery_remaining = b.remaining;
                                   ctx.battery_current = b.current;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckBattery";
@@ -319,7 +310,8 @@ struct CheckGeofence : NodeBase
                                   ctx.vy = p.vy;
                                   ctx.vz = p.vz;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckGeofence";
@@ -340,13 +332,12 @@ struct CheckObstacleClear : NodeBase
                                   ctx.obstacle_distance = o.min_distance;
                                   ctx.obstacle_angle = o.angle;
                               },
-                              [](auto const &) {}},
+                              [](auto const &) {
+                              }},
                    e);
 
         ctx.active_node = "CheckObstacle";
-        return ctx.obstacle_distance > ctx.obstacle_threshold
-                   ? Status::Success
-                   : Status::Failure;
+        return ctx.obstacle_distance > ctx.obstacle_threshold ? Status::Success : Status::Failure;
     }
     void reset() {}
 };
@@ -405,8 +396,7 @@ struct Arm : NodeBase
                 ctx.home_y = ctx.y;
                 ctx.home_z = ctx.z;
                 ctx.home_set = true;
-                ctx.log("Home set: (" + std::to_string(ctx.x) + ", " +
-                        std::to_string(ctx.y) + ")");
+                ctx.log("Home set: (" + std::to_string(ctx.x) + ", " + std::to_string(ctx.y) + ")");
             }
             ticks = 0;
             return Status::Success;
@@ -503,8 +493,7 @@ struct Takeoff : NodeBase
 
         if (ticks % 10 == 1)
         {
-            ctx.log("Climbing: " + std::to_string(current_alt) + "/" +
-                    std::to_string(target_alt) + "m");
+            ctx.log("Climbing: " + std::to_string(current_alt) + "/" + std::to_string(target_alt) + "m");
         }
 
         return Status::Running;
@@ -716,8 +705,7 @@ struct HoldPosition : NodeBase
             hold_y = ctx.y;
             hold_z = ctx.z;
             position_captured = true;
-            ctx.log("Holding at (" + std::to_string(hold_x) + ", " +
-                    std::to_string(hold_y) + ")");
+            ctx.log("Holding at (" + std::to_string(hold_x) + ", " + std::to_string(hold_y) + ")");
         }
 
         ctx.setpoint.position[0] = hold_x;
@@ -728,8 +716,7 @@ struct HoldPosition : NodeBase
         // Hold for obstacle clearance (check happens elsewhere)
         if (++ticks % 50 == 0)
         {
-            ctx.log("Holding... obstacle at " +
-                    std::to_string(ctx.obstacle_distance) + "m");
+            ctx.log("Holding... obstacle at " + std::to_string(ctx.obstacle_distance) + "m");
         }
 
         // Stay in hold mode (Running) until obstacle clears
@@ -767,8 +754,7 @@ struct AvoidObstacle : NodeBase
             avoid_x = ctx.x + avoid_dist * std::cos(avoid_angle);
             avoid_y = ctx.y + avoid_dist * std::sin(avoid_angle);
             avoidance_started = true;
-            ctx.log("Avoiding obstacle, moving to (" +
-                    std::to_string(avoid_x) + ", " + std::to_string(avoid_y) + ")");
+            ctx.log("Avoiding obstacle, moving to (" + std::to_string(avoid_x) + ", " + std::to_string(avoid_y) + ")");
         }
 
         float const dist = ctx.horizontal_distance_to(avoid_x, avoid_y);
@@ -884,8 +870,7 @@ struct EnableOffboard : NodeBase
 
         if (++ticks < kSetpointsBeforeSwitch)
         {
-            ctx.log("Offboard prep: " + std::to_string(ticks) + "/" +
-                    std::to_string(kSetpointsBeforeSwitch));
+            ctx.log("Offboard prep: " + std::to_string(ticks) + "/" + std::to_string(kSetpointsBeforeSwitch));
             return Status::Running;
         }
 
@@ -910,7 +895,7 @@ struct EnableOffboard : NodeBase
 
 class PX4DroneNode : public rclcpp::Node
 {
-public:
+  public:
     PX4DroneNode() : Node("px4_drone_bt")
     {
         // QoS for PX4
@@ -919,59 +904,35 @@ public:
                        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
         // Publishers
-        offboard_pub_ = create_publisher<OffboardControlMode>(
-            "/fmu/in/offboard_control_mode", 10);
-        setpoint_pub_ = create_publisher<TrajectorySetpoint>(
-            "/fmu/in/trajectory_setpoint", 10);
-        command_pub_ = create_publisher<VehicleCommand>(
-            "/fmu/in/vehicle_command", 10);
-        status_pub_ = create_publisher<std_msgs::msg::String>(
-            "/drone/bt_status", 10);
+        offboard_pub_ = create_publisher<OffboardControlMode>("/fmu/in/offboard_control_mode", 10);
+        setpoint_pub_ = create_publisher<TrajectorySetpoint>("/fmu/in/trajectory_setpoint", 10);
+        command_pub_ = create_publisher<VehicleCommand>("/fmu/in/vehicle_command", 10);
+        status_pub_ = create_publisher<std_msgs::msg::String>("/drone/bt_status", 10);
 
         // Subscribers
         battery_sub_ = create_subscription<BatteryStatus>(
-            "/fmu/out/battery_status", qos,
-            [this](BatteryStatus::SharedPtr msg)
-            {
-                events_.push_back(BatteryUpdate{
-                    msg->voltage_v,
-                    msg->remaining,
-                    msg->current_a});
-            });
+            "/fmu/out/battery_status", qos, [this](BatteryStatus::SharedPtr msg)
+            { events_.push_back(BatteryUpdate{msg->voltage_v, msg->remaining, msg->current_a}); });
 
         local_pos_sub_ = create_subscription<VehicleLocalPosition>(
-            "/fmu/out/vehicle_local_position", qos,
-            [this](VehicleLocalPosition::SharedPtr msg)
-            {
-                events_.push_back(LocalPositionUpdate{
-                    msg->x, msg->y, msg->z,
-                    msg->vx, msg->vy, msg->vz});
-            });
+            "/fmu/out/vehicle_local_position", qos, [this](VehicleLocalPosition::SharedPtr msg)
+            { events_.push_back(LocalPositionUpdate{msg->x, msg->y, msg->z, msg->vx, msg->vy, msg->vz}); });
 
         global_pos_sub_ = create_subscription<VehicleGlobalPosition>(
-            "/fmu/out/vehicle_global_position", qos,
-            [this](VehicleGlobalPosition::SharedPtr msg)
-            {
-                events_.push_back(PositionUpdate{
-                    msg->lat, msg->lon, msg->alt, msg->alt_ellipsoid});
-            });
+            "/fmu/out/vehicle_global_position", qos, [this](VehicleGlobalPosition::SharedPtr msg)
+            { events_.push_back(PositionUpdate{msg->lat, msg->lon, msg->alt, msg->alt_ellipsoid}); });
 
         status_sub_ = create_subscription<VehicleStatus>(
             "/fmu/out/vehicle_status", qos,
-            [this](VehicleStatus::SharedPtr msg)
-            {
-                events_.push_back(VehicleStatusUpdate{
-                    msg->arming_state,
-                    msg->nav_state,
-                    msg->pre_flight_checks_pass});
+            [this](VehicleStatus::SharedPtr msg) {
+                events_.push_back(VehicleStatusUpdate{msg->arming_state, msg->nav_state, msg->pre_flight_checks_pass});
             });
 
         // Setup mission waypoints (square pattern)
         setup_mission();
 
         // Main loop at 10Hz
-        timer_ = create_wall_timer(100ms, [this]()
-                                   { tick(); });
+        timer_ = create_wall_timer(100ms, [this]() { tick(); });
 
         print_tree_structure();
 
@@ -979,7 +940,7 @@ public:
         RCLCPP_INFO(get_logger(), "Waiting for PX4 connection...");
     }
 
-private:
+  private:
     void setup_mission()
     {
         // Square patrol pattern (NED coordinates)
@@ -1093,18 +1054,15 @@ private:
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
 
         // Active node
-        std::cout << "│ Active: " << std::setw(54) << std::left
-                  << ctx_.active_node << "│\n";
+        std::cout << "│ Active: " << std::setw(54) << std::left << ctx_.active_node << "│\n";
 
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
 
         // State
         std::string arm_state = ctx_.is_armed() ? "ARMED" : "DISARMED";
         std::string air_state = ctx_.is_airborne() ? "AIRBORNE" : "GROUND";
-        std::cout << "│ State: " << std::setw(12) << arm_state
-                  << " | " << std::setw(10) << air_state
-                  << " | Offboard: " << (ctx_.offboard_enabled ? "ON " : "OFF")
-                  << "          │\n";
+        std::cout << "│ State: " << std::setw(12) << arm_state << " | " << std::setw(10) << air_state
+                  << " | Offboard: " << (ctx_.offboard_enabled ? "ON " : "OFF") << "          │\n";
 
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
 
@@ -1118,41 +1076,33 @@ private:
             else
                 std::cout << "░";
         }
-        std::cout << "] " << std::setw(3) << static_cast<int>(ctx_.battery_remaining * 100)
-                  << "% " << std::fixed << std::setprecision(1)
-                  << ctx_.battery_voltage << "V        │\n";
+        std::cout << "] " << std::setw(3) << static_cast<int>(ctx_.battery_remaining * 100) << "% " << std::fixed
+                  << std::setprecision(1) << ctx_.battery_voltage << "V        │\n";
 
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
 
         // Position
-        std::cout << "│ Position (NED): x=" << std::setw(7) << std::setprecision(2) << ctx_.x
-                  << " y=" << std::setw(7) << ctx_.y
-                  << " z=" << std::setw(7) << ctx_.z << "           │\n";
+        std::cout << "│ Position (NED): x=" << std::setw(7) << std::setprecision(2) << ctx_.x << " y=" << std::setw(7)
+                  << ctx_.y << " z=" << std::setw(7) << ctx_.z << "           │\n";
 
-        std::cout << "│ Altitude AGL:   " << std::setw(6) << (-ctx_.z) << "m"
-                  << "    Velocity: " << std::setw(5)
-                  << std::sqrt(ctx_.vx * ctx_.vx + ctx_.vy * ctx_.vy + ctx_.vz * ctx_.vz)
-                  << " m/s          │\n";
+        std::cout << "│ Altitude AGL:   " << std::setw(6) << (-ctx_.z) << "m" << "    Velocity: " << std::setw(5)
+                  << std::sqrt(ctx_.vx * ctx_.vx + ctx_.vy * ctx_.vy + ctx_.vz * ctx_.vz) << " m/s          │\n";
 
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
 
         // Mission
-        std::cout << "│ Mission: WP " << ctx_.current_waypoint << "/"
-                  << ctx_.waypoints.size();
+        std::cout << "│ Mission: WP " << ctx_.current_waypoint << "/" << ctx_.waypoints.size();
         if (!ctx_.waypoints.empty() && ctx_.current_waypoint < ctx_.waypoints.size())
         {
             auto const &wp = ctx_.waypoints[ctx_.current_waypoint];
-            std::cout << " [" << wp.name << "] dist="
-                      << std::setw(5) << ctx_.distance_to(wp.x, wp.y, wp.z) << "m";
+            std::cout << " [" << wp.name << "] dist=" << std::setw(5) << ctx_.distance_to(wp.x, wp.y, wp.z) << "m";
         }
         std::cout << std::setw(20) << " " << "│\n";
 
         // Geofence & Obstacle
         float const horiz_dist = std::sqrt(ctx_.x * ctx_.x + ctx_.y * ctx_.y);
-        std::cout << "│ Geofence: " << std::setw(5) << horiz_dist << "/"
-                  << std::setw(5) << ctx_.geofence_radius << "m"
-                  << "   Obstacle: " << std::setw(5) << ctx_.obstacle_distance << "m"
-                  << "              │\n";
+        std::cout << "│ Geofence: " << std::setw(5) << horiz_dist << "/" << std::setw(5) << ctx_.geofence_radius << "m"
+                  << "   Obstacle: " << std::setw(5) << ctx_.obstacle_distance << "m" << "              │\n";
 
         std::cout << "├────────────────────────────────────────────────────────────────┤\n";
 
@@ -1201,15 +1151,12 @@ private:
         // Mission complete
         (CheckMissionComplete{} && Land{} && Disarm{}) ||
         // Fallback
-        Idle{}) tree_ =
-        ((!CheckGeofence{} || !CheckBattery{0.15f}) && EmergencyLand{}) ||
-        (!CheckBattery{0.25f} && ReturnToLaunch{}) ||
-        (CheckBattery{0.25f} && CheckGeofence{} &&
-         (CheckArmed{} || (CheckPreflightOk{} && Arm{})) &&
-         (CheckAirborne{} || (EnableOffboard{} && Takeoff{})) &&
-         ((CheckObstacleClear{} && NavigateToWaypoint{}) || AvoidObstacle{})) ||
-        (CheckMissionComplete{} && Land{} && Disarm{}) ||
-        Idle{};
+        Idle{}) tree_ = ((!CheckGeofence{} || !CheckBattery{0.15f}) && EmergencyLand{}) ||
+                        (!CheckBattery{0.25f} && ReturnToLaunch{}) ||
+                        (CheckBattery{0.25f} && CheckGeofence{} && (CheckArmed{} || (CheckPreflightOk{} && Arm{})) &&
+                         (CheckAirborne{} || (EnableOffboard{} && Takeoff{})) &&
+                         ((CheckObstacleClear{} && NavigateToWaypoint{}) || AvoidObstacle{})) ||
+                        (CheckMissionComplete{} && Land{} && Disarm{}) || Idle{};
 
     DroneContext ctx_{};
     std::vector<Event> events_{};

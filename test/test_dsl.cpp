@@ -97,9 +97,8 @@ namespace
         // Tree: (A >> B) | (!C)
         auto tree = (NodeA{} && NodeB{}) || (!NodeC{});
 
-        using ExpectedTree = Selector<Event, Context,
-                                      Sequence<Event, Context, NodeA, NodeB>,
-                                      Inverter<Event, Context, NodeC>>;
+        using ExpectedTree =
+            Selector<Event, Context, Sequence<Event, Context, NodeA, NodeB>, Inverter<Event, Context, NodeC>>;
 
         static_assert(std::is_same_v<decltype(tree), ExpectedTree>);
     }
