@@ -64,10 +64,11 @@ namespace
                                              ctx.enemies_detected++;
                                              return Status::Success;
                                          },
-                                         [](const TickEvent &)
-                                         { return Status::Running; },
+                                         [](const TickEvent &) { return Status::Running; },
                                          [](const auto &)
-                                         { return Status::Running; }},
+                                         {
+                                             return Status::Running;
+                                         }},
                               e);
         }
         void reset() {}
@@ -140,10 +141,8 @@ namespace
         RobotContext ctx;
         ctx.battery = 100;
 
-        Sequence<Event, RobotContext, CheckBattery, ScanForEnemy, FireWeapon> combat(
-            CheckBattery(20),
-            ScanForEnemy{},
-            FireWeapon(3));
+        Sequence<Event, RobotContext, CheckBattery, ScanForEnemy, FireWeapon> combat(CheckBattery(20), ScanForEnemy{},
+                                                                                     FireWeapon(3));
 
         // Battery OK, scanning...
         EXPECT_EQ(combat.process(TickEvent{}, ctx), Status::Running);
@@ -171,14 +170,9 @@ namespace
         RobotContext ctx;
         ctx.battery = 10; // Low battery!
 
-        Selector<Event, RobotContext,
-                 Sequence<Event, RobotContext, CheckBattery, ScanForEnemy>,
-                 ActivateAlarm>
-            root(
-                Sequence<Event, RobotContext, CheckBattery, ScanForEnemy>(
-                    CheckBattery(20),
-                    ScanForEnemy{}),
-                ActivateAlarm{});
+        Selector<Event, RobotContext, Sequence<Event, RobotContext, CheckBattery, ScanForEnemy>, ActivateAlarm> root(
+            Sequence<Event, RobotContext, CheckBattery, ScanForEnemy>(CheckBattery(20), ScanForEnemy{}),
+            ActivateAlarm{});
 
         // Battery fails, alarm activates
         auto result = root.process(TickEvent{}, ctx);
@@ -236,9 +230,7 @@ namespace
         RobotContext ctx;
         bool moved = false;
 
-        Parallel<Event, RobotContext, MoveToCover, FireWeapon> maneuver(
-            MoveToCover(&moved),
-            FireWeapon(2));
+        Parallel<Event, RobotContext, MoveToCover, FireWeapon> maneuver(MoveToCover(&moved), FireWeapon(2));
 
         // First tick: Move completes, Fire starts
         EXPECT_EQ(maneuver.process(TickEvent{}, ctx), Status::Running);
@@ -267,23 +259,15 @@ namespace
         using AlwaysFail = AlwaysFailure<Event, RobotContext>;
 
         Selector<Event, RobotContext,
-                 Sequence<Event, RobotContext,
-                          CheckBattery,
-                          Parallel<Event, RobotContext,
-                                   ScanForEnemy,
-                                   Inverter<Event, RobotContext, AlwaysFail>>>,
+                 Sequence<Event, RobotContext, CheckBattery,
+                          Parallel<Event, RobotContext, ScanForEnemy, Inverter<Event, RobotContext, AlwaysFail>>>,
                  ActivateAlarm>
-            root(
-                Sequence<Event, RobotContext,
-                         CheckBattery,
-                         Parallel<Event, RobotContext,
-                                  ScanForEnemy,
-                                  Inverter<Event, RobotContext, AlwaysFail>>>(
-                    CheckBattery(20),
-                    Parallel<Event, RobotContext, ScanForEnemy, Inverter<Event, RobotContext, AlwaysFail>>(
-                        ScanForEnemy{},
-                        Inverter<Event, RobotContext, AlwaysFail>(AlwaysFail{}))),
-                ActivateAlarm{});
+            root(Sequence<Event, RobotContext, CheckBattery,
+                          Parallel<Event, RobotContext, ScanForEnemy, Inverter<Event, RobotContext, AlwaysFail>>>(
+                     CheckBattery(20),
+                     Parallel<Event, RobotContext, ScanForEnemy, Inverter<Event, RobotContext, AlwaysFail>>(
+                         ScanForEnemy{}, Inverter<Event, RobotContext, AlwaysFail>(AlwaysFail{}))),
+                 ActivateAlarm{});
 
         // Tick: Battery OK, parallel running (scan waiting, inverter succeeds)
         EXPECT_EQ(root.process(TickEvent{}, ctx), Status::Running);
@@ -316,9 +300,7 @@ namespace
         RobotContext ctx;
         ctx.battery = 100;
 
-        auto seq = make_sequence<Event, RobotContext>(
-            CheckBattery(20),
-            ActivateAlarm{});
+        auto seq = make_sequence<Event, RobotContext>(CheckBattery(20), ActivateAlarm{});
 
         auto result = seq.process(TickEvent{}, ctx);
         EXPECT_EQ(result, Status::Success);
@@ -330,9 +312,7 @@ namespace
         RobotContext ctx;
         ctx.battery = 10;
 
-        auto sel = make_selector<Event, RobotContext>(
-            CheckBattery(20),
-            ActivateAlarm{});
+        auto sel = make_selector<Event, RobotContext>(CheckBattery(20), ActivateAlarm{});
 
         auto result = sel.process(TickEvent{}, ctx);
         EXPECT_EQ(result, Status::Success);
@@ -343,8 +323,7 @@ namespace
     {
         RobotContext ctx;
 
-        auto inv = make_inverter<Event, RobotContext>(
-            AlwaysFailure<Event, RobotContext>{});
+        auto inv = make_inverter<Event, RobotContext>(AlwaysFailure<Event, RobotContext>{});
 
         EXPECT_EQ(inv.process(TickEvent{}, ctx), Status::Success);
     }

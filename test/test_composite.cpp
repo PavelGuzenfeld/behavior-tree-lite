@@ -53,8 +53,7 @@ namespace
         int ticks_to_complete;
         int current_tick = 0;
 
-        explicit RunningNode(int ticks = 2, std::string n = "running")
-            : name(std::move(n)), ticks_to_complete(ticks) {}
+        explicit RunningNode(int ticks = 2, std::string n = "running") : name(std::move(n)), ticks_to_complete(ticks) {}
 
         Status process(const TestEvent &, TestContext &ctx)
         {
@@ -93,8 +92,8 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Sequence<TestEvent, TestContext, SuccessNode, SuccessNode, SuccessNode> seq(
-            SuccessNode("a"), SuccessNode("b"), SuccessNode("c"));
+        Sequence<TestEvent, TestContext, SuccessNode, SuccessNode, SuccessNode> seq(SuccessNode("a"), SuccessNode("b"),
+                                                                                    SuccessNode("c"));
 
         auto result = seq.process(evt, ctx);
 
@@ -110,8 +109,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Sequence<TestEvent, TestContext, FailureNode, SuccessNode> seq(
-            FailureNode("fail"), SuccessNode("skip"));
+        Sequence<TestEvent, TestContext, FailureNode, SuccessNode> seq(FailureNode("fail"), SuccessNode("skip"));
 
         auto result = seq.process(evt, ctx);
 
@@ -168,8 +166,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Selector<TestEvent, TestContext, SuccessNode, FailureNode> sel(
-            SuccessNode("first"), FailureNode("skip"));
+        Selector<TestEvent, TestContext, SuccessNode, FailureNode> sel(SuccessNode("first"), FailureNode("skip"));
 
         auto result = sel.process(evt, ctx);
 
@@ -183,8 +180,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Selector<TestEvent, TestContext, FailureNode, SuccessNode> sel(
-            FailureNode("fail"), SuccessNode("success"));
+        Selector<TestEvent, TestContext, FailureNode, SuccessNode> sel(FailureNode("fail"), SuccessNode("success"));
 
         auto result = sel.process(evt, ctx);
 
@@ -199,8 +195,8 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Selector<TestEvent, TestContext, FailureNode, FailureNode, FailureNode> sel(
-            FailureNode("a"), FailureNode("b"), FailureNode("c"));
+        Selector<TestEvent, TestContext, FailureNode, FailureNode, FailureNode> sel(FailureNode("a"), FailureNode("b"),
+                                                                                    FailureNode("c"));
 
         auto result = sel.process(evt, ctx);
 
@@ -235,8 +231,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Parallel<TestEvent, TestContext, SuccessNode, SuccessNode> par(
-            SuccessNode("a"), SuccessNode("b"));
+        Parallel<TestEvent, TestContext, SuccessNode, SuccessNode> par(SuccessNode("a"), SuccessNode("b"));
 
         auto result = par.process(evt, ctx);
 
@@ -249,8 +244,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Parallel<TestEvent, TestContext, SuccessNode, FailureNode> par(
-            SuccessNode("a"), FailureNode("fail"));
+        Parallel<TestEvent, TestContext, SuccessNode, FailureNode> par(SuccessNode("a"), FailureNode("fail"));
 
         auto result = par.process(evt, ctx);
 
@@ -262,8 +256,8 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Parallel<TestEvent, TestContext, RunningNode, SuccessNode> par(
-            RunningNode(2, "running"), SuccessNode("instant"));
+        Parallel<TestEvent, TestContext, RunningNode, SuccessNode> par(RunningNode(2, "running"),
+                                                                       SuccessNode("instant"));
 
         // First tick: instant succeeds, running still going
         auto r1 = par.process(evt, ctx);
@@ -280,13 +274,130 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Parallel<TestEvent, TestContext, CounterNode, CounterNode> par{
-            CounterNode{&counter1}, CounterNode{&counter2}};
+        Parallel<TestEvent, TestContext, CounterNode, CounterNode> par{CounterNode{&counter1}, CounterNode{&counter2}};
 
         par.process(evt, ctx);
 
         EXPECT_EQ(counter1, 1);
         EXPECT_EQ(counter2, 1);
+    }
+
+    // ==========================================
+    // SINGLE CHILD TESTS
+    // ==========================================
+
+    TEST(SequenceTest, SingleChildSuccess)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        Sequence<TestEvent, TestContext, SuccessNode> seq(SuccessNode("only"));
+
+        auto result = seq.process(evt, ctx);
+        EXPECT_EQ(result, Status::Success);
+        EXPECT_EQ(ctx.log.size(), 1u);
+    }
+
+    TEST(SequenceTest, SingleChildFailure)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        Sequence<TestEvent, TestContext, FailureNode> seq(FailureNode("only"));
+
+        auto result = seq.process(evt, ctx);
+        EXPECT_EQ(result, Status::Failure);
+    }
+
+    TEST(SelectorTest, SingleChildSuccess)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        Selector<TestEvent, TestContext, SuccessNode> sel(SuccessNode("only"));
+
+        auto result = sel.process(evt, ctx);
+        EXPECT_EQ(result, Status::Success);
+    }
+
+    TEST(SelectorTest, SingleChildFailure)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        Selector<TestEvent, TestContext, FailureNode> sel(FailureNode("only"));
+
+        auto result = sel.process(evt, ctx);
+        EXPECT_EQ(result, Status::Failure);
+    }
+
+    TEST(ParallelTest, SingleChildSuccess)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        Parallel<TestEvent, TestContext, SuccessNode> par(SuccessNode("only"));
+
+        auto result = par.process(evt, ctx);
+        EXPECT_EQ(result, Status::Success);
+    }
+
+    TEST(ParallelTest, SingleChildFailure)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        Parallel<TestEvent, TestContext, FailureNode> par(FailureNode("only"));
+
+        auto result = par.process(evt, ctx);
+        EXPECT_EQ(result, Status::Failure);
+    }
+
+    // ==========================================
+    // DEEPLY NESTED TESTS
+    // ==========================================
+
+    TEST(CompositeTest, DeeplyNestedSequenceInSelector)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        // Selector
+        //   ├─ Sequence(Failure, Success)  → Failure
+        //   └─ Sequence(Success, Success)  → Success
+        Selector<TestEvent, TestContext, Sequence<TestEvent, TestContext, FailureNode, SuccessNode>,
+                 Sequence<TestEvent, TestContext, SuccessNode, SuccessNode>>
+            root(Sequence<TestEvent, TestContext, FailureNode, SuccessNode>(FailureNode("f"), SuccessNode("skip")),
+                 Sequence<TestEvent, TestContext, SuccessNode, SuccessNode>(SuccessNode("a"), SuccessNode("b")));
+
+        auto result = root.process(evt, ctx);
+        EXPECT_EQ(result, Status::Success);
+        ASSERT_EQ(ctx.log.size(), 3u);
+        EXPECT_EQ(ctx.log[0], "f");
+        EXPECT_EQ(ctx.log[1], "a");
+        EXPECT_EQ(ctx.log[2], "b");
+    }
+
+    TEST(CompositeTest, ThreeLevelNesting)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        // Sequence
+        //   ├─ Selector
+        //   │    ├─ Failure
+        //   │    └─ Success("inner")
+        //   └─ Success("outer")
+        Sequence<TestEvent, TestContext, Selector<TestEvent, TestContext, FailureNode, SuccessNode>, SuccessNode> root(
+            Selector<TestEvent, TestContext, FailureNode, SuccessNode>(FailureNode("f"), SuccessNode("inner")),
+            SuccessNode("outer"));
+
+        auto result = root.process(evt, ctx);
+        EXPECT_EQ(result, Status::Success);
+        ASSERT_EQ(ctx.log.size(), 3u);
+        EXPECT_EQ(ctx.log[0], "f");
+        EXPECT_EQ(ctx.log[1], "inner");
+        EXPECT_EQ(ctx.log[2], "outer");
     }
 
     // ==========================================
@@ -298,8 +409,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Sequence<TestEvent, TestContext, RunningNode, SuccessNode> seq(
-            RunningNode(3, "running"), SuccessNode("b"));
+        Sequence<TestEvent, TestContext, RunningNode, SuccessNode> seq(RunningNode(3, "running"), SuccessNode("b"));
 
         seq.process(evt, ctx);
         EXPECT_EQ(seq.current_index, 0u);
@@ -313,8 +423,7 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        Parallel<TestEvent, TestContext, RunningNode, SuccessNode> par(
-            RunningNode(3), SuccessNode());
+        Parallel<TestEvent, TestContext, RunningNode, SuccessNode> par(RunningNode(3), SuccessNode());
 
         par.process(evt, ctx);
 

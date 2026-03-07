@@ -163,8 +163,7 @@ struct Navigate : NodeBase
         ctx.cmd_vel.linear.x = 0.5;
         ctx.cmd_vel.angular.z = 0.0;
 
-        ctx.log("Nav to WP" + std::to_string(ctx.current_waypoint) + " [" +
-                std::to_string(++ticks) + "/10]");
+        ctx.log("Nav to WP" + std::to_string(ctx.current_waypoint) + " [" + std::to_string(++ticks) + "/10]");
 
         if (ticks >= 10)
         {
@@ -304,7 +303,7 @@ struct Idle : NodeBase
 
 class PatrolRobotNode : public rclcpp::Node
 {
-public:
+  public:
     PatrolRobotNode() : Node("patrol_robot")
     {
         // publishers
@@ -316,40 +315,37 @@ public:
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         // subscribers
-        battery_sub_ = create_subscription<std_msgs::msg::Float32>(
-            "/battery", 10,
-            [this](std_msgs::msg::Float32::SharedPtr msg)
-            { events_.push_back(BatteryUpdate{msg->data}); });
+        battery_sub_ =
+            create_subscription<std_msgs::msg::Float32>("/battery", 10, [this](std_msgs::msg::Float32::SharedPtr msg)
+                                                        { events_.push_back(BatteryUpdate{msg->data}); });
 
-        laser_sub_ = create_subscription<sensor_msgs::msg::LaserScan>(
-            "/scan", 10,
-            [this](sensor_msgs::msg::LaserScan::SharedPtr msg)
-            {
-                if (msg->ranges.empty())
-                {
-                    return;
-                }
-                float const min_d = *std::min_element(msg->ranges.begin(), msg->ranges.end());
-                events_.push_back(LaserUpdate{min_d});
-            });
+        laser_sub_ = create_subscription<sensor_msgs::msg::LaserScan>("/scan", 10,
+                                                                      [this](sensor_msgs::msg::LaserScan::SharedPtr msg)
+                                                                      {
+                                                                          if (msg->ranges.empty())
+                                                                          {
+                                                                              return;
+                                                                          }
+                                                                          float const min_d = *std::min_element(
+                                                                              msg->ranges.begin(), msg->ranges.end());
+                                                                          events_.push_back(LaserUpdate{min_d});
+                                                                      });
 
-        estop_sub_ = create_subscription<std_msgs::msg::Bool>(
-            "/estop", 10,
-            [this](std_msgs::msg::Bool::SharedPtr msg)
-            {
-                if (msg->data)
-                {
-                    events_.push_back(EmergencyStop{});
-                }
-            });
+        estop_sub_ = create_subscription<std_msgs::msg::Bool>("/estop", 10,
+                                                              [this](std_msgs::msg::Bool::SharedPtr msg)
+                                                              {
+                                                                  if (msg->data)
+                                                                  {
+                                                                      events_.push_back(EmergencyStop{});
+                                                                  }
+                                                              });
 
-        timer_ = create_wall_timer(100ms, [this]()
-                                   { tick_(); });
+        timer_ = create_wall_timer(100ms, [this]() { tick_(); });
 
         print_tree_structure_();
     }
 
-private:
+  private:
     void tick_()
     {
         // process sensor events
@@ -533,15 +529,14 @@ private:
         }
         std::cout << "] " << std::setw(3) << static_cast<int>(ctx_.battery_level) << "%     │\n";
 
-        std::cout << "│ Obstacle: " << std::fixed << std::setprecision(2) << std::setw(5)
-                  << ctx_.obstacle_distance << "m" << std::setw(33) << " " << "│\n";
-        std::cout << "│ Waypoint: " << ctx_.current_waypoint << "/" << ctx_.total_waypoints
-                  << std::setw(37) << " " << "│\n";
+        std::cout << "│ Obstacle: " << std::fixed << std::setprecision(2) << std::setw(5) << ctx_.obstacle_distance
+                  << "m" << std::setw(33) << " " << "│\n";
+        std::cout << "│ Waypoint: " << ctx_.current_waypoint << "/" << ctx_.total_waypoints << std::setw(37) << " "
+                  << "│\n";
         std::cout << "│ Cmd: lin=" << std::setw(4) << ctx_.cmd_vel.linear.x << " ang=" << std::setw(4)
                   << ctx_.cmd_vel.angular.z << std::setw(25) << " " << "│\n";
-        std::cout << "│ Pose: x=" << std::setw(6) << std::setprecision(2) << std::fixed << x_
-                  << " y=" << std::setw(6) << y_ << " yaw=" << std::setw(6) << yaw_
-                  << std::setw(6) << " " << "│\n";
+        std::cout << "│ Pose: x=" << std::setw(6) << std::setprecision(2) << std::fixed << x_ << " y=" << std::setw(6)
+                  << y_ << " yaw=" << std::setw(6) << yaw_ << std::setw(6) << " " << "│\n";
 
         std::cout << "├────────────────────────────────────────────────────┤\n";
         std::cout << "│ Log:                                               │\n";
@@ -635,12 +630,10 @@ private:
         int id = 0;
         markers.markers.push_back(make_text(id++, 0.0f, 3.0f, "ROOT (||)", false));
         markers.markers.push_back(make_text(id++, -3.0f, 2.0f, "Emergency", ctx_.active_node == "HALT"));
-        markers.markers.push_back(make_text(
-            id++, -1.0f, 2.0f, "LowBatt",
-            (ctx_.active_node == "Charge") || (ctx_.active_node == "GoToCharger")));
-        markers.markers.push_back(make_text(
-            id++, 1.0f, 2.0f, "Patrol",
-            (ctx_.active_node == "Navigate") || (ctx_.active_node == "Avoid")));
+        markers.markers.push_back(make_text(id++, -1.0f, 2.0f, "LowBatt",
+                                            (ctx_.active_node == "Charge") || (ctx_.active_node == "GoToCharger")));
+        markers.markers.push_back(
+            make_text(id++, 1.0f, 2.0f, "Patrol", (ctx_.active_node == "Navigate") || (ctx_.active_node == "Avoid")));
         markers.markers.push_back(make_text(id++, 3.0f, 2.0f, "Idle", ctx_.active_node == "Idle"));
         markers.markers.push_back(make_text(id++, 0.0f, 0.0f, "[" + ctx_.active_node + "]", true));
 
@@ -650,14 +643,10 @@ private:
     // =========================================================================
     // BEHAVIOR TREE - DSL DEFINITION
     // =========================================================================
-    decltype((!CheckEmergency{} && Halt{}) ||
-             (!CheckBattery{} && GoToCharger{} && Charge{}) ||
-             (CheckBattery{} && ((CheckObstacle{} && Navigate{}) || Avoid{})) ||
-             Idle{}) tree_ =
-        (!CheckEmergency{} && Halt{}) ||
-        (!CheckBattery{} && GoToCharger{} && Charge{}) ||
-        (CheckBattery{} && ((CheckObstacle{} && Navigate{}) || Avoid{})) ||
-        Idle{};
+    decltype((!CheckEmergency{} && Halt{}) || (!CheckBattery{} && GoToCharger{} && Charge{}) ||
+             (CheckBattery{} && ((CheckObstacle{} && Navigate{}) || Avoid{})) || Idle{}) tree_ =
+        (!CheckEmergency{} && Halt{}) || (!CheckBattery{} && GoToCharger{} && Charge{}) ||
+        (CheckBattery{} && ((CheckObstacle{} && Navigate{}) || Avoid{})) || Idle{};
 
     RobotContext ctx_{};
     std::vector<Event> events_{};

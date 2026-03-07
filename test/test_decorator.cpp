@@ -323,4 +323,130 @@ namespace
         EXPECT_EQ(timeout.ticks, 0);
     }
 
+    // ==========================================
+    // GUARD TESTS
+    // ==========================================
+
+    TEST(GuardTest, ProcessesChildWhenPredicateTrue)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        auto always_true = [](const TestContext &)
+        {
+            return true;
+        };
+        Guard<TestEvent, TestContext, decltype(always_true), SuccessNode> guard(always_true, SuccessNode{});
+
+        auto result = guard.process(evt, ctx);
+        EXPECT_EQ(result, Status::Success);
+    }
+
+    TEST(GuardTest, ReturnsFailureWhenPredicateFalse)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        auto always_false = [](const TestContext &)
+        {
+            return false;
+        };
+        Guard<TestEvent, TestContext, decltype(always_false), SuccessNode> guard(always_false, SuccessNode{});
+
+        auto result = guard.process(evt, ctx);
+        EXPECT_EQ(result, Status::Failure);
+    }
+
+    TEST(GuardTest, ChildNotProcessedWhenPredicateFalse)
+    {
+        TestContext ctx;
+        TestEvent evt;
+        int counter = 0;
+
+        auto pred = [](const TestContext &)
+        {
+            return false;
+        };
+        Guard<TestEvent, TestContext, decltype(pred), CountingNode> guard(pred, CountingNode(&counter, 1));
+
+        guard.process(evt, ctx);
+        EXPECT_EQ(counter, 0);
+    }
+
+    TEST(GuardTest, PredicateReadsContext)
+    {
+        struct ContextWithFlag
+        {
+        };
+        // Re-use TestContext (it's empty but that's fine)
+        // Use a stateful predicate instead
+        bool flag = true;
+
+        TestContext ctx;
+        TestEvent evt;
+
+        auto pred = [&flag](const TestContext &)
+        {
+            return flag;
+        };
+        Guard<TestEvent, TestContext, decltype(pred), SuccessNode> guard(pred, SuccessNode{});
+
+        EXPECT_EQ(guard.process(evt, ctx), Status::Success);
+
+        flag = false;
+        EXPECT_EQ(guard.process(evt, ctx), Status::Failure);
+    }
+
+    TEST(GuardTest, PassesThroughChildRunning)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        auto always_true = [](const TestContext &)
+        {
+            return true;
+        };
+        Guard<TestEvent, TestContext, decltype(always_true), RunningNode> guard(always_true, RunningNode{});
+
+        auto result = guard.process(evt, ctx);
+        EXPECT_EQ(result, Status::Running);
+    }
+
+    TEST(GuardTest, ResetResetsChild)
+    {
+        TestContext ctx;
+        TestEvent evt;
+        int counter = 0;
+
+        auto pred = [](const TestContext &)
+        {
+            return true;
+        };
+        Guard<TestEvent, TestContext, decltype(pred), CountingNode> guard(pred, CountingNode(&counter, 3));
+
+        guard.process(evt, ctx); // tick 1
+        guard.process(evt, ctx); // tick 2
+        EXPECT_EQ(counter, 2);
+
+        guard.reset();
+
+        // After reset, child should start from scratch
+        auto result = guard.process(evt, ctx);
+        EXPECT_EQ(result, Status::Running); // needs 3 ticks, got 1
+    }
+
+    // ==========================================
+    // FACTORY HELPER TESTS
+    // ==========================================
+
+    TEST(GuardTest, MakeGuardFactory)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        auto guard = make_guard<TestEvent, TestContext>([](const TestContext &) { return true; }, SuccessNode{});
+
+        EXPECT_EQ(guard.process(evt, ctx), Status::Success);
+    }
+
 } // anonymous namespace

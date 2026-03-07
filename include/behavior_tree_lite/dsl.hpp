@@ -24,53 +24,43 @@ namespace bt
     // LIBRARY NODE DETECTION
     // ==========================================
 
-    template <typename T>
-    struct is_bt_library_node : std::false_type
+    template <typename T> struct is_bt_library_node : std::false_type
     {
     };
 
-    template <typename E, typename C, typename... Ts>
-    struct is_bt_library_node<Sequence<E, C, Ts...>> : std::true_type
+    template <typename E, typename C, typename... Ts> struct is_bt_library_node<Sequence<E, C, Ts...>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename... Ts>
-    struct is_bt_library_node<Selector<E, C, Ts...>> : std::true_type
+    template <typename E, typename C, typename... Ts> struct is_bt_library_node<Selector<E, C, Ts...>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename... Ts>
-    struct is_bt_library_node<Parallel<E, C, Ts...>> : std::true_type
+    template <typename E, typename C, typename... Ts> struct is_bt_library_node<Parallel<E, C, Ts...>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename T>
-    struct is_bt_library_node<Inverter<E, C, T>> : std::true_type
+    template <typename E, typename C, typename T> struct is_bt_library_node<Inverter<E, C, T>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename T>
-    struct is_bt_library_node<Retry<E, C, T>> : std::true_type
+    template <typename E, typename C, typename T> struct is_bt_library_node<Retry<E, C, T>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename T>
-    struct is_bt_library_node<Repeat<E, C, T>> : std::true_type
+    template <typename E, typename C, typename T> struct is_bt_library_node<Repeat<E, C, T>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename T>
-    struct is_bt_library_node<Succeeder<E, C, T>> : std::true_type
+    template <typename E, typename C, typename T> struct is_bt_library_node<Succeeder<E, C, T>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename T>
-    struct is_bt_library_node<Failer<E, C, T>> : std::true_type
+    template <typename E, typename C, typename T> struct is_bt_library_node<Failer<E, C, T>> : std::true_type
     {
     };
 
-    template <typename E, typename C, typename T>
-    struct is_bt_library_node<Timeout<E, C, T>> : std::true_type
+    template <typename E, typename C, typename T> struct is_bt_library_node<Timeout<E, C, T>> : std::true_type
     {
     };
 
@@ -83,20 +73,17 @@ namespace bt
     // for user nodes that don't bother with typedefs
     // (because apparently that's too much work)
 
-    template <typename T>
-    struct ProcessTraits;
+    template <typename T> struct ProcessTraits;
 
     // non-const process method: Status process(const Event&, Context&)
-    template <typename R, typename C, typename E, typename Ctx>
-    struct ProcessTraits<R (C::*)(E const &, Ctx &)>
+    template <typename R, typename C, typename E, typename Ctx> struct ProcessTraits<R (C::*)(E const &, Ctx &)>
     {
         using EventType = std::remove_cvref_t<E>;
         using ContextType = std::remove_cvref_t<Ctx>;
     };
 
     // const process method: Status process(const Event&, Context&) const
-    template <typename R, typename C, typename E, typename Ctx>
-    struct ProcessTraits<R (C::*)(E const &, Ctx &) const>
+    template <typename R, typename C, typename E, typename Ctx> struct ProcessTraits<R (C::*)(E const &, Ctx &) const>
     {
         using EventType = std::remove_cvref_t<E>;
         using ContextType = std::remove_cvref_t<Ctx>;
@@ -124,137 +111,115 @@ namespace bt
     // LIBRARY NODE TRAITS
     // ==========================================
 
-    template <typename T>
-    struct LibraryNodeTraits;
+    template <typename T> struct LibraryNodeTraits;
 
-    template <typename E, typename C, typename... Ts>
-    struct LibraryNodeTraits<Sequence<E, C, Ts...>>
+    template <typename E, typename C, typename... Ts> struct LibraryNodeTraits<Sequence<E, C, Ts...>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename... Ts>
-    struct LibraryNodeTraits<Selector<E, C, Ts...>>
+    template <typename E, typename C, typename... Ts> struct LibraryNodeTraits<Selector<E, C, Ts...>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename... Ts>
-    struct LibraryNodeTraits<Parallel<E, C, Ts...>>
+    template <typename E, typename C, typename... Ts> struct LibraryNodeTraits<Parallel<E, C, Ts...>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename T>
-    struct LibraryNodeTraits<Inverter<E, C, T>>
+    template <typename E, typename C, typename T> struct LibraryNodeTraits<Inverter<E, C, T>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename T>
-    struct LibraryNodeTraits<Retry<E, C, T>>
+    template <typename E, typename C, typename T> struct LibraryNodeTraits<Retry<E, C, T>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename T>
-    struct LibraryNodeTraits<Repeat<E, C, T>>
+    template <typename E, typename C, typename T> struct LibraryNodeTraits<Repeat<E, C, T>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename T>
-    struct LibraryNodeTraits<Succeeder<E, C, T>>
+    template <typename E, typename C, typename T> struct LibraryNodeTraits<Succeeder<E, C, T>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename T>
-    struct LibraryNodeTraits<Failer<E, C, T>>
+    template <typename E, typename C, typename T> struct LibraryNodeTraits<Failer<E, C, T>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
-    template <typename E, typename C, typename T>
-    struct LibraryNodeTraits<Timeout<E, C, T>>
+    template <typename E, typename C, typename T> struct LibraryNodeTraits<Timeout<E, C, T>>
     {
         using EventType = E;
         using ContextType = C;
     };
 
     // ==========================================
-    // TYPE EXTRACTION (the part you butchered)
+    // TYPE EXTRACTION
     // ==========================================
 
     // primary template - SFINAE will select the right specialization
-    template <typename T, typename = void>
-    struct EventOfImpl;
+    template <typename T, typename = void> struct EventOfImpl;
 
     // case 1: library nodes - extract from template parameters
-    template <typename T>
-    struct EventOfImpl<T, std::enable_if_t<IsLibraryNode<std::decay_t<T>>>>
+    template <typename T> struct EventOfImpl<T, std::enable_if_t<IsLibraryNode<std::decay_t<T>>>>
     {
         using type = typename LibraryNodeTraits<std::decay_t<T>>::EventType;
     };
 
     // case 2: user nodes with explicit typedefs (but not library nodes)
     template <typename T>
-    struct EventOfImpl<T, std::enable_if_t<
-                              !IsLibraryNode<std::decay_t<T>> && HasNodeTypedefs<std::decay_t<T>>>>
+    struct EventOfImpl<T, std::enable_if_t<!IsLibraryNode<std::decay_t<T>> && HasNodeTypedefs<std::decay_t<T>>>>
     {
         using type = typename std::decay_t<T>::EventType;
     };
 
     // case 3: user nodes with only process method (deduce from signature)
     template <typename T>
-    struct EventOfImpl<T, std::enable_if_t<
-                              !IsLibraryNode<std::decay_t<T>> &&
-                              !HasNodeTypedefs<std::decay_t<T>> &&
-                              HasDeducibleProcess<std::decay_t<T>>>>
+    struct EventOfImpl<T, std::enable_if_t<!IsLibraryNode<std::decay_t<T>> && !HasNodeTypedefs<std::decay_t<T>> &&
+                                           HasDeducibleProcess<std::decay_t<T>>>>
     {
         using type = typename ProcessTraits<decltype(&std::decay_t<T>::process)>::EventType;
     };
 
     // same logic for Context extraction
-    template <typename T, typename = void>
-    struct ContextOfImpl;
+    template <typename T, typename = void> struct ContextOfImpl;
 
-    template <typename T>
-    struct ContextOfImpl<T, std::enable_if_t<IsLibraryNode<std::decay_t<T>>>>
+    template <typename T> struct ContextOfImpl<T, std::enable_if_t<IsLibraryNode<std::decay_t<T>>>>
     {
         using type = typename LibraryNodeTraits<std::decay_t<T>>::ContextType;
     };
 
     template <typename T>
-    struct ContextOfImpl<T, std::enable_if_t<
-                                !IsLibraryNode<std::decay_t<T>> && HasNodeTypedefs<std::decay_t<T>>>>
+    struct ContextOfImpl<T, std::enable_if_t<!IsLibraryNode<std::decay_t<T>> && HasNodeTypedefs<std::decay_t<T>>>>
     {
         using type = typename std::decay_t<T>::ContextType;
     };
 
     template <typename T>
-    struct ContextOfImpl<T, std::enable_if_t<
-                                !IsLibraryNode<std::decay_t<T>> &&
-                                !HasNodeTypedefs<std::decay_t<T>> &&
-                                HasDeducibleProcess<std::decay_t<T>>>>
+    struct ContextOfImpl<T, std::enable_if_t<!IsLibraryNode<std::decay_t<T>> && !HasNodeTypedefs<std::decay_t<T>> &&
+                                             HasDeducibleProcess<std::decay_t<T>>>>
     {
         using type = typename ProcessTraits<decltype(&std::decay_t<T>::process)>::ContextType;
     };
 
     // convenience aliases
-    template <typename T>
-    using EventOf = typename EventOfImpl<T>::type;
+    template <typename T> using EventOf = typename EventOfImpl<T>::type;
 
-    template <typename T>
-    using ContextOf = typename ContextOfImpl<T>::type;
+    template <typename T> using ContextOf = typename ContextOfImpl<T>::type;
 
     // ==========================================
     // OPERATORS
@@ -275,28 +240,18 @@ namespace bt
         requires IsBTNode<R>
     constexpr auto operator&&(Sequence<E, C, Children...> &&seq, R &&r)
     {
-        return std::apply(
-            [&](auto &&...args)
-            {
-                return make_sequence<E, C>(
-                    std::forward<decltype(args)>(args)...,
-                    std::forward<R>(r));
-            },
-            std::move(seq.children));
+        return std::apply([&](auto &&...args)
+                          { return make_sequence<E, C>(std::forward<decltype(args)>(args)..., std::forward<R>(r)); },
+                          std::move(seq.children));
     }
 
     template <typename L, typename E, typename C, typename... Children>
         requires IsBTNode<L>
     constexpr auto operator&&(L &&l, Sequence<E, C, Children...> &&seq)
     {
-        return std::apply(
-            [&](auto &&...args)
-            {
-                return make_sequence<E, C>(
-                    std::forward<L>(l),
-                    std::forward<decltype(args)>(args)...);
-            },
-            std::move(seq.children));
+        return std::apply([&](auto &&...args)
+                          { return make_sequence<E, C>(std::forward<L>(l), std::forward<decltype(args)>(args)...); },
+                          std::move(seq.children));
     }
 
     // --- SELECTOR (||) ---
@@ -314,14 +269,9 @@ namespace bt
         requires IsBTNode<R>
     constexpr auto operator||(Selector<E, C, Children...> &&sel, R &&r)
     {
-        return std::apply(
-            [&](auto &&...args)
-            {
-                return make_selector<E, C>(
-                    std::forward<decltype(args)>(args)...,
-                    std::forward<R>(r));
-            },
-            std::move(sel.children));
+        return std::apply([&](auto &&...args)
+                          { return make_selector<E, C>(std::forward<decltype(args)>(args)..., std::forward<R>(r)); },
+                          std::move(sel.children));
     }
 
     // --- INVERTER (!) ---
