@@ -20,8 +20,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - ros_distro: humble
-            os: ubuntu-22.04
           - ros_distro: jazzy
             os: ubuntu-24.04
 
@@ -44,7 +42,7 @@ jobs:
         shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_CXX_STANDARD=23
 
       - name: Test
         shell: bash
