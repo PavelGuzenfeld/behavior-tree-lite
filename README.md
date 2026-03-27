@@ -383,3 +383,7 @@ See [ROADMAP.md](ROADMAP.md) for the detailed development plan.
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+> **[Documentation and design notes on pavelguzenfeld.com](https://pavelguzenfeld.com/projects/behavior-tree-lite/)**
