@@ -2,8 +2,11 @@
 
 #include "behavior_tree.hpp"
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <string_view>
 #include <tuple>
+#include <vector>
 
 namespace bt
 {
@@ -185,6 +188,45 @@ namespace bt
     template <typename T> void print_tree(const T &node, std::ostream &os = std::cout)
     {
         internal::print_tree_impl(node, 0, os);
+    }
+
+    namespace internal
+    {
+
+        inline std::string dot_escaped(std::string_view label)
+        {
+            std::string escaped;
+            for (char c : label)
+            {
+                if (c == '"' || c == '\\')
+                    escaped += '\\';
+                escaped += c;
+            }
+            return escaped;
+        }
+
+    } // namespace internal
+
+    template <typename T> void to_dot(const T &node, std::ostream &os = std::cout)
+    {
+        std::ostringstream indented;
+        print_tree(node, indented);
+
+        os << "digraph behavior_tree {\n";
+        std::vector<std::size_t> last_at_depth;
+        std::istringstream lines(indented.str());
+        std::string line;
+        for (std::size_t id = 0; std::getline(lines, line); ++id)
+        {
+            const auto label_start = line.find_first_not_of(' ');
+            const auto depth = label_start / 2;
+            os << "  n" << id << " [label=\"" << internal::dot_escaped(line.substr(label_start)) << "\"];\n";
+            if (depth > 0)
+                os << "  n" << last_at_depth[depth - 1] << " -> n" << id << ";\n";
+            last_at_depth.resize(depth + 1);
+            last_at_depth[depth] = id;
+        }
+        os << "}\n";
     }
 
 } // namespace bt

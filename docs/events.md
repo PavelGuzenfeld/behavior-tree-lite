@@ -52,3 +52,16 @@ Decorators print their parameter, such as `Retry (3x)` or
 `Timeout (10 ticks)`. Leaf names come from the compiler's type name, so
 they read best for non-template structs. `print_tree` takes an optional
 `std::ostream&`, which defaults to `std::cout`.
+
+## Graphviz
+
+`to_dot` writes the same tree as a Graphviz digraph, one node per tree node
+and one edge from each parent:
+
+```cpp
+bt::to_dot(tree, file);
+```
+
+```bash
+dot -Tsvg tree.dot -o tree.svg
+```

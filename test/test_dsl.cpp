@@ -1,6 +1,8 @@
 #include "behavior_tree_lite/behavior_tree.hpp"
+#include "behavior_tree_lite/debug.hpp"
 #include "behavior_tree_lite/dsl.hpp"
 #include <gtest/gtest.h>
+#include <sstream>
 
 using namespace bt;
 
@@ -232,3 +234,58 @@ namespace
     }
 
 } // namespace
+namespace dot_test
+{
+
+    struct Event
+    {
+    };
+    struct Context
+    {
+    };
+
+    struct Leaf1 : bt::NodeBase
+    {
+        using EventType = Event;
+        using ContextType = Context;
+        bt::Status process(const Event &, Context &) { return bt::Status::Success; }
+    };
+    struct Leaf2 : Leaf1
+    {
+    };
+    struct Leaf3 : Leaf1
+    {
+    };
+
+    TEST(ToDotTest, EmitsOneNodePerTreeNodeAndAnEdgeFromEachParent)
+    {
+        auto tree = (Leaf1{} && Leaf2{}) || Leaf3{};
+        std::ostringstream out;
+
+        bt::to_dot(tree, out);
+
+        EXPECT_EQ(out.str(), "digraph behavior_tree {\n"
+                             "  n0 [label=\"Selector\"];\n"
+                             "  n1 [label=\"Sequence\"];\n"
+                             "  n0 -> n1;\n"
+                             "  n2 [label=\"dot_test::Leaf1\"];\n"
+                             "  n1 -> n2;\n"
+                             "  n3 [label=\"dot_test::Leaf2\"];\n"
+                             "  n1 -> n3;\n"
+                             "  n4 [label=\"dot_test::Leaf3\"];\n"
+                             "  n0 -> n4;\n"
+                             "}\n");
+    }
+
+    TEST(ToDotTest, DecoratorLabelsKeepTheirParameter)
+    {
+        auto tree = bt::make_retry<Event, Context>(3, Leaf1{});
+        std::ostringstream out;
+
+        bt::to_dot(tree, out);
+
+        EXPECT_NE(out.str().find("[label=\"Retry (3x)\"]"), std::string::npos);
+        EXPECT_NE(out.str().find("n0 -> n1;"), std::string::npos);
+    }
+
+} // namespace dot_test
