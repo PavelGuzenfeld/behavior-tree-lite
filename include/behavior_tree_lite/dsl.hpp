@@ -72,6 +72,17 @@ namespace bt
         using ContextType = std::remove_cvref_t<Ctx>;
     };
 
+    template <typename F>
+        requires requires {
+            typename ProcessTraits<decltype(&std::decay_t<F>::operator())>::EventType;
+            typename ProcessTraits<decltype(&std::decay_t<F>::operator())>::ContextType;
+        }
+    constexpr auto leaf(F &&f)
+    {
+        using Traits = ProcessTraits<decltype(&std::decay_t<F>::operator())>;
+        return make_action<typename Traits::EventType, typename Traits::ContextType>(std::forward<F>(f));
+    }
+
     template <typename T>
         requires requires { &T::process; }
     constexpr auto call_member()

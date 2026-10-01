@@ -192,4 +192,43 @@ namespace
         EXPECT_EQ(seq.process(Event{}, ctx), Status::Success);
     }
 
+    TEST(LambdaLeafTest, LeafDeducesTypesAndMapsReturnValuesToStatus)
+    {
+        Context ctx;
+        int calls = 0;
+
+        auto from_void = leaf([&](const Event &, Context &) { ++calls; });
+        auto from_true = leaf([](const Event &, Context &) { return true; });
+        auto from_false = leaf([](const Event &, Context &) { return false; });
+        auto from_status = leaf([](const Event &, Context &) { return Status::Running; });
+
+        EXPECT_EQ(from_void.process(Event{}, ctx), Status::Success);
+        EXPECT_EQ(calls, 1);
+        EXPECT_EQ(from_true.process(Event{}, ctx), Status::Success);
+        EXPECT_EQ(from_false.process(Event{}, ctx), Status::Failure);
+        EXPECT_EQ(from_status.process(Event{}, ctx), Status::Running);
+    }
+
+    TEST(LambdaLeafTest, LambdaLeavesComposeWithTheOperators)
+    {
+        Context ctx;
+        int visited = 0;
+
+        auto tree = (leaf([&](const Event &, Context &) { ++visited; }) &&
+                     leaf([](const Event &, Context &) { return false; })) ||
+                    leaf([&](const Event &, Context &) { visited += 10; });
+
+        static_assert(std::is_same_v<EventOf<decltype(tree)>, Event>);
+        EXPECT_EQ(tree.process(Event{}, ctx), Status::Success);
+        EXPECT_EQ(visited, 11);
+    }
+
+    TEST(LambdaLeafTest, MakeActionTakesExplicitTypes)
+    {
+        Context ctx;
+        auto action = make_action<Event, Context>([](const auto &, auto &) { return false; });
+
+        EXPECT_EQ(action.process(Event{}, ctx), Status::Failure);
+    }
+
 } // namespace

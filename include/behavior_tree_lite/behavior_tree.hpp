@@ -15,6 +15,13 @@ namespace bt
         int patch = 1;
     } version;
 
+    template <typename Event, typename Context, typename F>
+        requires std::invocable<F, const Event &, Context &>
+    constexpr auto make_action(F &&f)
+    {
+        return Action<Event, Context, std::decay_t<F>>(std::forward<F>(f));
+    }
+
     template <typename Event, typename Context, typename Pred, IsNode<Event, Context> Child>
         requires std::predicate<Pred, const Context &>
     constexpr auto make_guard(Pred &&pred, Child &&child)
