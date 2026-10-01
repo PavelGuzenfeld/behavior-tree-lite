@@ -1,0 +1,52 @@
+site_name: behavior_tree_lite
+site_description: Header-only C++23 behavior tree library with a compile-time operator DSL.
+site_url: https://pavelguzenfeld.com/behavior-tree-lite/
+repo_url: https://github.com/PavelGuzenfeld/behavior-tree-lite
+repo_name: PavelGuzenfeld/behavior-tree-lite
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: green
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: green
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.tabs.link
+    - search.suggest
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - DSL: dsl.md
+  - Nodes: nodes.md
+  - Events and debugging: events.md
+  - ROS 2 example: ros2.md
+  - PX4 SITL example: px4.md
+  - Performance: performance.md

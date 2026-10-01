@@ -60,19 +60,19 @@ struct Inspect : NodeBase
     using ContextType = Context;
     Status process(const Event &, Context &)
     {
-        std::cout << "[Inspect] Pow!\n";
+        std::cout << "[Inspect] Inspecting\n";
         return Status::Success;
     }
     void reset() {}
 };
 
-struct RunAway : NodeBase
+struct ReturnHome : NodeBase
 {
     using EventType = Event;
     using ContextType = Context;
     Status process(const Event &, Context &)
     {
-        std::cout << "[RunAway] Running away!\n";
+        std::cout << "[ReturnHome] Heading to the dock\n";
         return Status::Success;
     }
     void reset() {}
@@ -82,7 +82,7 @@ int main()
 {
     Context ctx;
 
-    auto tree = (CheckBattery{} && (Scan{} || Inspect{})) || RunAway{};
+    auto tree = (CheckBattery{} && (Scan{} || Inspect{})) || ReturnHome{};
 
     std::cout << "=== Behavior Tree Structure ===\n";
     print_tree(tree);
