@@ -29,7 +29,7 @@ namespace bt
             }
         }
 
-        constexpr void reset() { child.reset(); }
+        constexpr void reset() { reset_node(child); }
     };
 
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Retry : NodeBase
@@ -48,7 +48,7 @@ namespace bt
             Status s = self.child.process(e, ctx);
             if (s == Status::Failure && ++self.attempts < self.max_attempts)
             {
-                self.child.reset();
+                reset_node(self.child);
                 return Status::Running;
             }
             if (s != Status::Running)
@@ -59,7 +59,7 @@ namespace bt
         constexpr void reset()
         {
             attempts = 0;
-            child.reset();
+            reset_node(child);
         }
     };
 
@@ -87,7 +87,7 @@ namespace bt
                 return Status::Failure;
             }
 
-            self.child.reset();
+            reset_node(self.child);
             if (self.max_iterations < 0)
                 return Status::Running;
 
@@ -102,7 +102,7 @@ namespace bt
         constexpr void reset()
         {
             completed = 0;
-            child.reset();
+            reset_node(child);
         }
     };
 
@@ -121,7 +121,7 @@ namespace bt
             return s == Status::Running ? Status::Running : Status::Success;
         }
 
-        constexpr void reset() { child.reset(); }
+        constexpr void reset() { reset_node(child); }
     };
 
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Failer : NodeBase
@@ -139,7 +139,7 @@ namespace bt
             return s == Status::Running ? Status::Running : Status::Failure;
         }
 
-        constexpr void reset() { child.reset(); }
+        constexpr void reset() { reset_node(child); }
     };
 
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Timeout : NodeBase
@@ -170,7 +170,7 @@ namespace bt
         constexpr void reset()
         {
             ticks = 0;
-            child.reset();
+            reset_node(child);
         }
     };
 
@@ -193,7 +193,7 @@ namespace bt
             return self.child.process(e, ctx);
         }
 
-        constexpr void reset() { child.reset(); }
+        constexpr void reset() { reset_node(child); }
     };
 
 } // namespace bt

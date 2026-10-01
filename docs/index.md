@@ -19,7 +19,7 @@ tick, and a typo in the tree shows up when the robot runs, not when it
 compiles.
 
 If the tree is known when you build, none of that is needed. Here the tree
-is a type. A missing `reset()` or a node with the wrong event type is a
+is a type. A node with the wrong event type or a missing `process()` is a
 compile error, and the optimizer sees through the whole tree.
 
 | | behavior_tree_lite | [BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP) |

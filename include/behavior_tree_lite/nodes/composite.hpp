@@ -35,10 +35,10 @@ namespace bt
                     result = Status::Running;
                 } else if (s == Status::Failure) {
                     self.current_index = 0;
-                    child.reset();
+                    reset_node(child);
                     result = Status::Failure;
                 } else {
-                    child.reset();
+                    reset_node(child);
                 } }()                                             : void()),
                  ...);
 
@@ -51,7 +51,7 @@ namespace bt
         constexpr void reset()
         {
             current_index = 0;
-            std::apply([](auto &...c) { (c.reset(), ...); }, children);
+            std::apply([](auto &...c) { (reset_node(c), ...); }, children);
         }
     };
 
@@ -81,10 +81,10 @@ namespace bt
                     result = Status::Running;
                 } else if (s == Status::Success) {
                     self.current_index = 0;
-                    child.reset();
+                    reset_node(child);
                     result = Status::Success;
                 } else {
-                    child.reset();
+                    reset_node(child);
                 } }()                                             : void()),
                  ...);
 
@@ -97,7 +97,7 @@ namespace bt
         constexpr void reset()
         {
             current_index = 0;
-            std::apply([](auto &...c) { (c.reset(), ...); }, children);
+            std::apply([](auto &...c) { (reset_node(c), ...); }, children);
         }
     };
 
@@ -132,12 +132,12 @@ namespace bt
                          {
                          case Status::Success:
                              self.finished[Is] = true;
-                             child.reset();
+                             reset_node(child);
                              ++successes;
                              break;
                          case Status::Failure:
                              failed = true;
-                             child.reset();
+                             reset_node(child);
                              break;
                          case Status::Running:
                              break;
@@ -162,7 +162,7 @@ namespace bt
         constexpr void reset()
         {
             finished.fill(false);
-            std::apply([](auto &...c) { (c.reset(), ...); }, children);
+            std::apply([](auto &...c) { (reset_node(c), ...); }, children);
         }
     };
 

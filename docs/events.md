@@ -23,7 +23,6 @@ struct CheckBattery : NodeBase {
         }, e);
         return ctx.battery > 20 ? Status::Success : Status::Failure;
     }
-    void reset() {}
 };
 ```
 

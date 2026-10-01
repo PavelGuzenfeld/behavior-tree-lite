@@ -220,7 +220,6 @@ struct MyCustomCheck : NodeBase
         return Status::Failure;
     }
     
-    void reset() {}
 };
 ```
 

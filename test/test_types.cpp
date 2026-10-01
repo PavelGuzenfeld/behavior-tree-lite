@@ -53,7 +53,7 @@ namespace
         void reset() {}
     };
 
-    struct InvalidNodeNoReset : NodeBase
+    struct NodeWithoutReset : NodeBase
     {
         Status process(const MockEvent &, MockContext &) { return Status::Success; }
     };
@@ -62,7 +62,9 @@ namespace
     {
         static_assert(IsNode<ValidNode, MockEvent, MockContext>);
         static_assert(!IsNode<InvalidNodeNoProcess, MockEvent, MockContext>);
-        static_assert(!IsNode<InvalidNodeNoReset, MockEvent, MockContext>);
+        static_assert(IsNode<NodeWithoutReset, MockEvent, MockContext>);
+        static_assert(!HasReset<NodeWithoutReset>);
+        static_assert(HasReset<ValidNode>);
     }
 
     TEST(TypesTest, NodeBaseMovable)

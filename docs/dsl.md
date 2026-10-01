@@ -39,7 +39,6 @@ struct MyNode : NodeBase {
     using ContextType = Context;
 
     Status process(const Event&, Context&) { return Status::Success; }
-    void reset() {}
 };
 ```
 
@@ -51,7 +50,6 @@ typedefs:
 ```cpp
 struct SimpleNode {
     Status process(const Event&, Context&) { return Status::Success; }
-    void reset() {}
 };
 
 auto tree = SimpleNode{} && OtherNode{};

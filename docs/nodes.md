@@ -1,9 +1,13 @@
 # Nodes
 
-Every node returns `Status::Success`, `Status::Failure` or
-`Status::Running`, and has a `reset()` that puts it back to its first-tick
-state. A node satisfies the `IsNode<T, Event, Context>` concept if it has
-both.
+Every node has a `process(const Event&, Context&)` that returns
+`Status::Success`, `Status::Failure` or `Status::Running`. That is all the
+`IsNode<T, Event, Context>` concept asks for.
+
+A node may also have `void reset()`, which puts it back to its first-tick
+state. Parents call it after a child finishes or when they are reset
+themselves. A node without `reset()` is skipped, so stateless leaves need
+none.
 
 ## Composites
 
@@ -42,7 +46,7 @@ auto guard   = make_guard<Event, Context>(
 
 ### Your own structs
 
-Most leaves are your own structs with `process()` and `reset()`, as in
+Most leaves are your own structs with `process()`, as in
 [Getting started](getting-started.md).
 
 ### `Action`
