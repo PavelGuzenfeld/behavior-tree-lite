@@ -18,7 +18,7 @@ namespace bt
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
-            switch (self.child.process(e, ctx))
+            switch (call_node<Event, Context>(self.child, e, ctx))
             {
             case Status::Success:
                 return Status::Failure;
@@ -45,7 +45,7 @@ namespace bt
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
-            Status s = self.child.process(e, ctx);
+            Status s = call_node<Event, Context>(self.child, e, ctx);
             if (s == Status::Failure && ++self.attempts < self.max_attempts)
             {
                 reset_node(self.child);
@@ -76,7 +76,7 @@ namespace bt
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
-            Status s = self.child.process(e, ctx);
+            Status s = call_node<Event, Context>(self.child, e, ctx);
 
             if (s == Status::Running)
                 return Status::Running;
@@ -117,7 +117,7 @@ namespace bt
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
-            Status s = self.child.process(e, ctx);
+            Status s = call_node<Event, Context>(self.child, e, ctx);
             return s == Status::Running ? Status::Running : Status::Success;
         }
 
@@ -135,7 +135,7 @@ namespace bt
 
         constexpr Status process(this auto &&self, const Event &e, Context &ctx)
         {
-            Status s = self.child.process(e, ctx);
+            Status s = call_node<Event, Context>(self.child, e, ctx);
             return s == Status::Running ? Status::Running : Status::Failure;
         }
 
@@ -161,7 +161,7 @@ namespace bt
                 return Status::Failure;
             }
 
-            Status s = self.child.process(e, ctx);
+            Status s = call_node<Event, Context>(self.child, e, ctx);
             if (s != Status::Running)
                 self.ticks = 0;
             return s;
@@ -190,7 +190,7 @@ namespace bt
         {
             if (!self.pred(ctx))
                 return Status::Failure;
-            return self.child.process(e, ctx);
+            return call_node<Event, Context>(self.child, e, ctx);
         }
 
         constexpr void reset() { reset_node(child); }

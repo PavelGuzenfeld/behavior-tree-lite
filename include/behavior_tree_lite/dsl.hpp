@@ -73,9 +73,24 @@ namespace bt
     };
 
     template <typename T>
+        requires requires { &T::process; }
+    constexpr auto call_member()
+    {
+        return &T::process;
+    }
+
+    template <typename T>
+        requires(
+            !requires { &T::process; } && requires { &T::operator(); })
+    constexpr auto call_member()
+    {
+        return &T::operator();
+    }
+
+    template <typename T>
     concept HasDeducibleProcess = requires {
-        typename ProcessTraits<decltype(&std::decay_t<T>::process)>::EventType;
-        typename ProcessTraits<decltype(&std::decay_t<T>::process)>::ContextType;
+        typename ProcessTraits<decltype(call_member<std::decay_t<T>>())>::EventType;
+        typename ProcessTraits<decltype(call_member<std::decay_t<T>>())>::ContextType;
     };
 
     template <typename T>
@@ -154,7 +169,7 @@ namespace bt
     struct EventOfImpl<T, std::enable_if_t<!IsLibraryNode<std::decay_t<T>> && !HasNodeTypedefs<std::decay_t<T>> &&
                                            HasDeducibleProcess<std::decay_t<T>>>>
     {
-        using type = typename ProcessTraits<decltype(&std::decay_t<T>::process)>::EventType;
+        using type = typename ProcessTraits<decltype(call_member<std::decay_t<T>>())>::EventType;
     };
 
     template <typename T, typename = void> struct ContextOfImpl;
@@ -174,7 +189,7 @@ namespace bt
     struct ContextOfImpl<T, std::enable_if_t<!IsLibraryNode<std::decay_t<T>> && !HasNodeTypedefs<std::decay_t<T>> &&
                                              HasDeducibleProcess<std::decay_t<T>>>>
     {
-        using type = typename ProcessTraits<decltype(&std::decay_t<T>::process)>::ContextType;
+        using type = typename ProcessTraits<decltype(call_member<std::decay_t<T>>())>::ContextType;
     };
 
     template <typename T> using EventOf = typename EventOfImpl<T>::type;
