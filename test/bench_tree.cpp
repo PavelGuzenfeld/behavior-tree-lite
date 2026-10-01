@@ -85,7 +85,7 @@ template <typename Fn> BenchResult bench(const char *name, std::size_t iteration
         fn();
     auto end = std::chrono::high_resolution_clock::now();
 
-    double ns = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    double ns = static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
     return {name, iterations, ns / static_cast<double>(iterations)};
 }
 

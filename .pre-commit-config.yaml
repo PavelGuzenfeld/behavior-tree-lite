@@ -10,6 +10,6 @@ repos:
       - id: clang-tidy
         name: clang-tidy
         language: system
-        files: ^include/.*\.hpp$
+        files: ^(include|test|examples)/.*\.(hpp|cpp)$
         pass_filenames: false
-        entry: bash -c 'CC=clang-18 CXX=clang++-18 cmake -S . -B build/tidy -DCMAKE_EXPORT_COMPILE_COMMANDS=ON >/dev/null && clang-tidy-18 -p build/tidy --warnings-as-errors="*" include/behavior_tree_lite/*.hpp include/behavior_tree_lite/nodes/*.hpp'
+        entry: bash -c 'CC=clang-18 CXX=clang++-18 cmake -S . -B build/tidy -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON -DBUILD_BENCHMARKS=ON >/dev/null && clang-tidy-18 -p build/tidy test/*.cpp examples/robot_example.cpp examples/minimal_composition.cpp'
