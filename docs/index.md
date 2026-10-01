@@ -42,6 +42,7 @@ want Groot. Pick this one if the tree ships with the binary.
   types are found.
 - [Nodes](nodes.md): every composite, decorator and leaf, and exactly what
   each returns.
+- [Blackboard](blackboard.md): a typed context with no runtime lookups.
 - [Events and debugging](events.md): `std::variant` events and
   `print_tree`.
 - [ROS 2 example](ros2.md) and [PX4 SITL example](px4.md).
