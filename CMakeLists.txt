@@ -28,9 +28,7 @@ target_include_directories(${PROJECT_NAME}
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_23)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  target_compile_options(${PROJECT_NAME} INTERFACE
-    -Wall -Wextra -Wpedantic -Werror=return-type
-  )
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror=return-type)
 endif()
 
 install(
