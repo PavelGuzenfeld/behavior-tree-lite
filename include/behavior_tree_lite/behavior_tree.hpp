@@ -1,5 +1,6 @@
 #pragma once
 
+#include "blackboard.hpp"
 #include "nodes/composite.hpp"
 #include "nodes/decorator.hpp"
 #include "nodes/leaf.hpp"

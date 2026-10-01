@@ -84,6 +84,7 @@ if(BUILD_TESTING)
         test/test_leaf.cpp
         test/test_integration.cpp
         test/test_dsl.cpp
+        test/test_blackboard.cpp
       )
       target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
     endif()
@@ -98,6 +99,7 @@ if(BUILD_TESTING)
         test/test_leaf.cpp
         test/test_integration.cpp
         test/test_dsl.cpp
+        test/test_blackboard.cpp
       )
       target_link_libraries(${PROJECT_NAME}_test
         ${PROJECT_NAME}

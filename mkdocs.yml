@@ -46,6 +46,7 @@ nav:
   - Getting started: getting-started.md
   - DSL: dsl.md
   - Nodes: nodes.md
+  - Blackboard: blackboard.md
   - Events and debugging: events.md
   - ROS 2 example: ros2.md
   - PX4 SITL example: px4.md
