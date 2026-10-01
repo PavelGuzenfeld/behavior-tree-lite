@@ -17,7 +17,7 @@ The library is headers only. Any of these works.
     include(FetchContent)
     FetchContent_Declare(behavior_tree_lite
       GIT_REPOSITORY https://github.com/PavelGuzenfeld/behavior-tree-lite.git
-      GIT_TAG v0.3.1)
+      GIT_TAG v0.4.0)
     set(BUILD_EXAMPLES OFF)
     FetchContent_MakeAvailable(behavior_tree_lite)
     target_link_libraries(my_app PRIVATE behavior_tree_lite::behavior_tree_lite)
