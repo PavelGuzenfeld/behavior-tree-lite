@@ -64,9 +64,18 @@ decides the status:
 - `void`: always Success
 
 ```cpp
-auto charge = [](const Event&, Context& c) { c.battery = 100; };
-Action<Event, Context, decltype(charge)> charge_node(charge);
+auto charge = leaf([](const Event&, Context& c) { c.battery = 100; });
+auto at_home = leaf([](const Event&, Context& c) { return c.at_dock; });
+
+auto go_home = leaf([](const Event&, Context& c) { c.at_dock = true; });
+
+auto tree = (std::move(at_home) && std::move(charge)) || std::move(go_home);
 ```
+
+Nodes are move-only, so a named leaf is moved into the tree. `leaf` reads the event and context types from the lambda's parameters, so the
+parameters must be spelled out: `leaf` does not take generic lambdas. For
+those, or when you want the types stated, use
+`make_action<Event, Context>(f)`. Both return an `Action`.
 
 ### `Condition`
 
