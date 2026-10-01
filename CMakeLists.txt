@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(behavior_tree_lite VERSION 0.3.1 LANGUAGES CXX)
+project(behavior_tree_lite VERSION 0.4.0 LANGUAGES CXX)
 
 option(BUILD_TESTING "Build unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)

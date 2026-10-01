@@ -12,8 +12,8 @@ namespace bt
     inline constexpr struct
     {
         int major = 0;
-        int minor = 3;
-        int patch = 1;
+        int minor = 4;
+        int patch = 0;
     } version;
 
     template <typename Event, typename Context, typename F>
