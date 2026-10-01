@@ -26,8 +26,18 @@ namespace bt
     template <typename T, typename Event, typename Context>
     concept IsNode = requires(T t, const Event &e, Context &ctx) {
         { t.process(e, ctx) } -> std::same_as<Status>;
+    };
+
+    template <typename T>
+    concept HasReset = requires(T t) {
         { t.reset() } -> std::same_as<void>;
     };
+
+    template <typename T> constexpr void reset_node(T &node)
+    {
+        if constexpr (HasReset<T>)
+            node.reset();
+    }
 
     template <typename T, typename Event, typename Context>
     concept IsStatelessNode = IsNode<T, Event, Context> && std::is_empty_v<T>;

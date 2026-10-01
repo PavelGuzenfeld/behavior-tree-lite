@@ -105,4 +105,34 @@ namespace
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, SimpleNode, NodeA>>);
     }
 
+    struct NoResetNode : NodeBase
+    {
+        using EventType = Event;
+        using ContextType = Context;
+        Status process(const Event &, Context &) { return Status::Failure; }
+    };
+
+    TEST(OptionalResetTest, NodeWithoutResetIsANode)
+    {
+        static_assert(IsNode<NoResetNode, Event, Context>);
+    }
+
+    TEST(OptionalResetTest, NodeWithoutResetComposesUnderEveryParent)
+    {
+        Context ctx;
+        auto seq = NoResetNode{} && NodeA{};
+        auto sel = NoResetNode{} || NodeA{};
+        auto inv = !NoResetNode{};
+        auto par = make_parallel<Event, Context>(NoResetNode{}, NodeA{});
+        auto retry = make_retry<Event, Context>(2, NoResetNode{});
+
+        EXPECT_EQ(seq.process(Event{}, ctx), Status::Failure);
+        EXPECT_EQ(sel.process(Event{}, ctx), Status::Success);
+        EXPECT_EQ(inv.process(Event{}, ctx), Status::Success);
+        EXPECT_EQ(par.process(Event{}, ctx), Status::Failure);
+        EXPECT_EQ(retry.process(Event{}, ctx), Status::Running);
+        seq.reset();
+        retry.reset();
+    }
+
 } // namespace

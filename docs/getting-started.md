@@ -77,7 +77,7 @@ struct Context {
 
 ### 2. Leaf nodes
 
-A node is a struct with `process()` and `reset()`. The two typedefs let the
+A node is a struct with `process()`. The two typedefs let the
 operators find your event and context types.
 
 ```cpp
@@ -88,7 +88,6 @@ struct CheckBattery : NodeBase {
     Status process(const Event&, Context& ctx) {
         return ctx.battery > 20 ? Status::Success : Status::Failure;
     }
-    void reset() {}
 };
 
 struct Inspect : NodeBase {
@@ -99,7 +98,6 @@ struct Inspect : NodeBase {
         std::cout << "Inspecting\n";
         return Status::Success;
     }
-    void reset() {}
 };
 
 struct ReturnHome : NodeBase {
@@ -110,7 +108,6 @@ struct ReturnHome : NodeBase {
         std::cout << "Heading to the dock\n";
         return Status::Success;
     }
-    void reset() {}
 };
 ```
 
