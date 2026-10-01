@@ -1,14 +1,19 @@
 # ROS 2 example
 
-`examples/patrol_robot_node.cpp` is a robot patrolling a cross pattern, with
+`examples/bt_ros2_examples/src/patrol_robot_node.cpp` is a robot patrolling a cross pattern, with
 a battery, a laser and an emergency stop. Nav2 and odometry are left out:
 the node integrates its own pose so RViz has something to draw.
 
 ```bash
-colcon build --packages-select behavior_tree_lite
+colcon build --base-paths src/behavior-tree-lite src/behavior-tree-lite/examples/bt_ros2_examples --packages-select behavior_tree_lite bt_ros2_examples
 source install/setup.bash
-ros2 launch behavior_tree_lite patrol_demo.launch.py
+ros2 launch bt_ros2_examples patrol_demo.launch.py
 ```
+
+The examples are their own package, `bt_ros2_examples`, inside the library's
+directory. colcon does not look inside a package for other packages, so name
+both paths with `--base-paths`. The library on its own builds with a plain
+`colcon build --packages-select behavior_tree_lite`.
 
 It shows:
 

@@ -3,24 +3,12 @@
 <package format="3">
   <name>behavior_tree_lite</name>
   <version>0.3.1</version>
-  <description>A lightweight, header-only, compile-time behavior tree library for C++23/26.</description>
+  <description>A lightweight, header-only, compile-time behavior tree library for C++23.</description>
 
   <maintainer email="me@pavelguzenfeld.com">Pavel Guzenfeld</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-
-  <depend>rclcpp</depend>
-  <depend>std_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>visualization_msgs</depend>
-  <depend>tf2_ros</depend>
-
-
-  <exec_depend>ament_index_python</exec_depend>
-  <exec_depend>robot_state_publisher</exec_depend>
-  <exec_depend>rviz2</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

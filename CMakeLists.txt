@@ -12,7 +12,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(ament_cmake QUIET)
-find_package(rclcpp QUIET)
 
 set(AMENT_CMAKE_FOUND ${ament_cmake_FOUND})
 
@@ -104,61 +103,9 @@ if(BUILD_EXAMPLES)
   add_executable(example_dsl examples/minimal_composition.cpp)
   target_link_libraries(example_dsl ${PROJECT_NAME})
 
-  if(ament_cmake_FOUND)
-    find_package(std_msgs REQUIRED)
-    find_package(geometry_msgs REQUIRED)
-    find_package(sensor_msgs REQUIRED)
-    find_package(visualization_msgs REQUIRED)
-    find_package(tf2_ros REQUIRED)
-
-    add_executable(patrol_robot_node examples/patrol_robot_node.cpp)
-    target_link_libraries(patrol_robot_node ${PROJECT_NAME})
-    ament_target_dependencies(patrol_robot_node
-      rclcpp
-      std_msgs
-      geometry_msgs
-      sensor_msgs
-      visualization_msgs
-      tf2_ros
-    )
-
-    find_package(px4_msgs QUIET)
-    if(px4_msgs_FOUND)
-      message(STATUS "px4_msgs found - building PX4 vehicle example")
-      
-      add_executable(px4_vehicle_node examples/px4_vehicle_node.cpp)
-      target_link_libraries(px4_vehicle_node ${PROJECT_NAME})
-      ament_target_dependencies(px4_vehicle_node
-        rclcpp
-        std_msgs
-        px4_msgs
-      )
-      
-      install(TARGETS px4_vehicle_node
-        RUNTIME DESTINATION lib/${PROJECT_NAME}
-      )
-    else()
-      message(STATUS "px4_msgs not found - skipping PX4 vehicle example")
-      message(STATUS "  To build PX4 example, clone px4_msgs to your workspace:")
-      message(STATUS "    cd ~/ros2_ws/src")
-      message(STATUS "    git clone https://github.com/PX4/px4_msgs.git")
-      message(STATUS "    colcon build --packages-select px4_msgs")
-    endif()
-    
-    install(TARGETS example_robot example_dsl patrol_robot_node
-      RUNTIME DESTINATION lib/${PROJECT_NAME}
-    )
-  else()
-    install(TARGETS example_robot example_dsl
-      RUNTIME DESTINATION lib/${PROJECT_NAME}
-    )
-  endif()
-endif()
-
-if(ament_cmake_FOUND)
-  install(DIRECTORY launch/ DESTINATION share/${PROJECT_NAME}/launch)
-  install(DIRECTORY rviz/   DESTINATION share/${PROJECT_NAME}/rviz)
-  install(DIRECTORY urdf/   DESTINATION share/${PROJECT_NAME}/urdf)
+  install(TARGETS example_robot example_dsl
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
+  )
 endif()
 
 if(ament_cmake_FOUND)

@@ -1,6 +1,6 @@
 # PX4 SITL example
 
-`examples/px4_vehicle_node.cpp` flies a four-waypoint mission in PX4 SITL: arm, take off, fly the square, land. A geofence and two battery thresholds can cut in at any point.
+`examples/bt_ros2_examples/src/px4_vehicle_node.cpp` flies a four-waypoint mission in PX4 SITL: arm, take off, fly the square, land. A geofence and two battery thresholds can cut in at any point.
 
 ## Prerequisites
 
@@ -48,11 +48,11 @@ colcon build --packages-select px4_msgs
 source install/setup.bash
 ```
 
-### 4. Build behavior_tree_lite with PX4 Support
+### 4. Build the examples with PX4 support
 
 ```bash
 cd ~/ros2_ws
-colcon build --packages-select behavior_tree_lite
+colcon build --base-paths src/behavior-tree-lite src/behavior-tree-lite/examples/bt_ros2_examples --packages-select behavior_tree_lite bt_ros2_examples
 source install/setup.bash
 ```
 
@@ -79,7 +79,7 @@ Wait for "Session established".
 
 ```bash
 source ~/ros2_ws/install/setup.bash
-ros2 launch behavior_tree_lite px4_sitl_demo.launch.py
+ros2 launch bt_ros2_examples px4_sitl_demo.launch.py
 ```
 
 ## Behavior Tree Structure
@@ -170,7 +170,7 @@ ros2 topic echo /fmu/out/vehicle_status
 
 ## Customizing the Mission
 
-Edit the `setup_mission()` function in `px4_vehicle_node.cpp`:
+Edit the `setup_mission()` function in `px4_vehicle_node.cpp` in `bt_ros2_examples`:
 
 ```cpp
 void setup_mission()
@@ -190,7 +190,7 @@ Waypoints are `{x, y, z, yaw, name}` in local NED metres: x north, y east, z dow
 
 ## Tuning
 
-These are fields of the context struct in `px4_vehicle_node.cpp`, not ROS parameters. Change them in the source and rebuild.
+These are fields of the context struct in `px4_vehicle_node.cpp` in `bt_ros2_examples`, not ROS parameters. Change them in the source and rebuild.
 
 | Field | Default | Description |
 |-----------|---------|-------------|
@@ -229,7 +229,7 @@ struct MyCustomCheck : NodeBase
 
 px4_msgs has to be built and sourced:
 ```bash
-colcon build --packages-select px4_msgs behavior_tree_lite
+colcon build --base-paths src/px4_msgs src/behavior-tree-lite src/behavior-tree-lite/examples/bt_ros2_examples --packages-select px4_msgs behavior_tree_lite bt_ros2_examples
 source install/setup.bash
 ```
 

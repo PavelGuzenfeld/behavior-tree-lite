@@ -33,21 +33,21 @@ jobs:
           apt-get update
           apt-get install -y python3-colcon-common-extensions python3-rosdep g++-14 doctest-dev
           rosdep update --rosdistro ${{ matrix.ros_distro }}
-          rosdep install --from-paths . --ignore-src -y
+          rosdep install --from-paths . examples/bt_ros2_examples --ignore-src -y
 
       - name: Build
         shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           export CC=gcc-14 CXX=g++-14
-          colcon build --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_CXX_STANDARD=23
+          colcon build --base-paths . examples/bt_ros2_examples --cmake-args -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DCMAKE_CXX_STANDARD=23
 
       - name: Test
         shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           source install/setup.bash
-          colcon test
+          colcon test --base-paths . examples/bt_ros2_examples
           colcon test-result --verbose
 
   standalone-build:
