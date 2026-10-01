@@ -6,31 +6,29 @@
 
 A lightweight, header-only, compile-time behavior tree library for C++23.
 
-**Sub-nanosecond node dispatch. Zero heap allocations. Tree structure resolved at compile time.**
+**Sub-nanosecond node dispatch. No heap allocations outside `DynamicAction`. Tree structure resolved at compile time.**
 
 ```cpp
 // Define behavior with natural C++ operators
 auto tree = (CheckBattery{} && Attack{}) || RunAway{};
-tree.process(Tick{}, ctx);  // ~0.9 ns for full tree evaluation
+tree.process(Tick{}, ctx);  // ~1 ns for full tree evaluation
 ```
 
 ## Why behavior_tree_lite?
 
 | | behavior_tree_lite | [BehaviorTree.CPP](https://github.com/BehaviorTree/BehaviorTree.CPP) |
 |---|---|---|
-| **Dispatch** | Compile-time templates (~0.1 ns) | Runtime polymorphism (~15-30 ns) |
+| **Dispatch** | Compile-time templates, inlined | Runtime polymorphism (virtual calls) |
 | **Tree definition** | C++ operators: `&&` `\|\|` `!` | XML files or runtime builder |
-| **Dependencies** | None (STL only) | Boost, tinyxml2, cppzmq |
-| **Allocations** | Zero (stack-only) | Heap (shared_ptr, strings) |
+| **Tree shape** | Fixed at compile time | Loaded and changed at runtime |
+| **Allocations** | None outside `DynamicAction` | Heap-allocated nodes |
 | **Header-only** | Yes | No (shared library) |
-| **Binary size** | Minimal (templates inline) | ~500 KB shared lib |
 | **C++ standard** | C++23 | C++17 |
-| **ROS 2** | Optional integration | Built around ROS |
 | **Best for** | Performance-critical, embedded, game AI | Complex trees, visual editors, logging |
 
 ## Features
 
-- **Header-only**: Zero compile-time dependencies (other than STL).
+- **Header-only**: No dependencies beyond the standard library.
 - **Compile-time Composition**: Tree structure is flattened at compile time.
 - **Expressive DSL**: Use `&&`, `||`, and `!` to compose trees naturally.
 - **Stack-based**: Events use `std::variant` (no virtual dispatch for events).
@@ -200,7 +198,7 @@ auto tree = retry_scan && Attack{};  // Types flow from retry_scan
 ## Decorators
 
 ```cpp
-// Retry up to 3 times on failure
+// Up to 3 attempts in total; Running between attempts
 auto retry = make_retry<Event, Context>(3, ScanNode{});
 
 // Repeat 5 times (or -1 for infinite)
@@ -216,7 +214,7 @@ auto safe = Succeeder<Event, Context, RiskyNode>(RiskyNode{});
 auto fail = Failer<Event, Context, CheckNode>(CheckNode{});
 
 // Conditional execution
-auto guard = Guard<Event, Context, decltype(pred), ActionNode>(
+auto guard = make_guard<Event, Context>(
     [](const Context& ctx) { return ctx.battery > 50; },
     ActionNode{}
 );
@@ -308,7 +306,7 @@ make_sequence<E, C>(children...)   // Create Sequence
 make_selector<E, C>(children...)   // Create Selector
 make_parallel<E, C>(children...)   // Create Parallel
 make_inverter<E, C>(child)         // Create Inverter
-make_retry<E, C>(attempts, child)  // Create Retry
+make_retry<E, C>(attempts, child)  // Create Retry (attempts in total)
 make_repeat<E, C>(count, child)    // Create Repeat (-1 = infinite)
 make_guard<E, C>(predicate, child) // Create Guard (conditional)
 ```
@@ -321,7 +319,7 @@ make_guard<E, C>(predicate, child) // Create Guard (conditional)
 | `Selector` | Tries children until one succeeds. |
 | `Parallel` | Runs all children each tick. Fails if any fail. |
 | `Inverter` | Flips Success/Failure. |
-| `Retry` | Retries child N times on failure. |
+| `Retry` | Runs child up to N times until it succeeds. |
 | `Repeat` | Repeats child N times (or forever). |
 | `Timeout` | Fails if child doesn't complete in N ticks. |
 | `Succeeder` | Always returns Success (unless Running). |
@@ -349,20 +347,20 @@ All compile-time composed nodes are fully inlined — zero overhead vs hand-writ
 
 | Benchmark | ns/op |
 |-----------|------:|
-| Single Action node | ~0.1 |
-| DynamicAction (std::function) | ~1.5 |
-| AlwaysSuccess (stateless) | ~0.1 |
-| Sequence (3 children) | ~0.1 |
-| Selector (2 children) | ~0.5 |
-| Parallel (3 children) | ~0.1 |
-| Inverter(Action) | ~0.1 |
-| Guard(predicate, Action) | ~0.1 |
-| DSL tree: (Check && Action) \|\| Fallback | ~0.9 |
-| 5-level nested tree | ~0.9 |
-| Sequence with Running child (resume) | ~0.8 |
-| std::visit variant dispatch | ~0.2 |
+| Single Action node | 0.2 |
+| DynamicAction (std::function) | 1.6 |
+| AlwaysSuccess (stateless) | 0.2 |
+| Sequence (3 children) | 0.1 |
+| Selector (2 children) | 0.4 |
+| Parallel (3 children) | 0.1 |
+| Inverter(Action) | 0.1 |
+| Guard(predicate, Action) | 0.4 |
+| DSL tree: (Check && Action) \|\| Fallback | 1.0 |
+| 5-level nested tree | 0.9 |
+| Sequence with Running child (resume) | 0.5 |
+| std::visit variant dispatch | 0.1 |
 
-> Measured on GCC 15 -O3, 1M iterations. `DynamicAction` (~1.5ns) is the only node with measurable overhead due to `std::function` indirection — all template-based nodes are sub-nanosecond.
+> Measured 2026-10-01: GCC 14.2 -O3, Intel i7-12700H, 1M iterations. `DynamicAction` is the only node with measurable overhead, from `std::function` indirection.
 
 ## Thread Safety
 
@@ -374,8 +372,9 @@ If you need to access a tree from multiple threads, provide your own external sy
 
 - C++23 or later
 - CMake 3.22+
+- GCC 14+ or Clang 18+ (deducing `this`)
 - GTest (for tests)
-- ROS2 Humble/Jazzy (optional, for ROS2 integration)
+- ROS 2 Jazzy (optional, for ROS 2 integration)
 
 ## Roadmap
 See [ROADMAP.md](ROADMAP.md) for the detailed development plan.

@@ -160,13 +160,6 @@ ros2 topic pub /fmu/out/battery_status px4_msgs/msg/BatteryStatus \
   "{voltage_v: 14.0, remaining: 0.20, current_a: 5.0}" --once
 ```
 
-### Simulate Obstacle
-
-```bash
-# Publish obstacle detection event
-ros2 topic pub /drone/obstacle std_msgs/msg/Float32 "{data: 2.0}" --once
-```
-
 ### Monitor Status
 
 ```bash
@@ -194,16 +187,18 @@ void setup_mission()
 }
 ```
 
-## Parameters
+## Tuning
 
-| Parameter | Default | Description |
+These are fields of the context struct in `px4_drone_node.cpp`, not ROS parameters. Change them in the source and rebuild.
+
+| Field | Default | Description |
 |-----------|---------|-------------|
 | `geofence_radius` | 100m | Max horizontal distance from home |
 | `geofence_max_alt` | 50m | Maximum altitude AGL |
 | `battery_critical` | 15% | Emergency land threshold |
 | `battery_low` | 25% | RTL threshold |
 | `waypoint_radius` | 1.5m | Waypoint acceptance radius |
-| `obstacle_threshold` | 3m | Obstacle avoidance trigger |
+| `obstacle_threshold` | 3m | Obstacle avoidance trigger (no obstacle source is wired in yet, so this branch never fires) |
 | `takeoff_alt` | 10m | Default takeoff altitude |
 
 ## Adding Custom Nodes
