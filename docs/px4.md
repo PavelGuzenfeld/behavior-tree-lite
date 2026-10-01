@@ -1,6 +1,6 @@
-# PX4 SITL Integration Guide
+# PX4 SITL example
 
-This guide covers setting up and running the behavior tree library with PX4 SITL simulation.
+`examples/px4_vehicle_node.cpp` flies a four-waypoint mission in PX4 SITL: arm, take off, fly the square, land. A geofence and two battery thresholds can cut in at any point.
 
 ## Prerequisites
 
@@ -65,7 +65,7 @@ cd ~/PX4-Autopilot
 make px4_sitl gazebo-classic
 ```
 
-Wait for "Ready for takeoff!" message.
+Wait for "Ready for takeoff!".
 
 ### Terminal 2: Start Micro-XRCE-DDS Agent
 
@@ -73,7 +73,7 @@ Wait for "Ready for takeoff!" message.
 MicroXRCEAgent udp4 -p 8888
 ```
 
-You should see "Session established" messages.
+Wait for "Session established".
 
 ### Terminal 3: Launch the Behavior Tree Node
 
@@ -154,24 +154,15 @@ auto tree =
 ### Simulate Low Battery
 
 ```bash
-# The node simulates battery drain automatically
-# Or publish a manual battery update:
 ros2 topic pub /fmu/out/battery_status px4_msgs/msg/BatteryStatus \
   "{voltage_v: 14.0, remaining: 0.20, current_a: 5.0}" --once
-```
-
-### Simulate Obstacle
-
-```bash
-# Publish obstacle detection event
-ros2 topic pub /drone/obstacle std_msgs/msg/Float32 "{data: 2.0}" --once
 ```
 
 ### Monitor Status
 
 ```bash
 # Watch behavior tree status
-ros2 topic echo /drone/bt_status
+ros2 topic echo /vehicle/bt_status
 
 # Watch vehicle status
 ros2 topic echo /fmu/out/vehicle_status
@@ -179,32 +170,37 @@ ros2 topic echo /fmu/out/vehicle_status
 
 ## Customizing the Mission
 
-Edit the `setup_mission()` function in `px4_drone_node.cpp`:
+Edit the `setup_mission()` function in `px4_vehicle_node.cpp`:
 
 ```cpp
 void setup_mission()
 {
-    // NED coordinates: x=North, y=East, z=Down (negative = up)
     ctx_.waypoints = {
-        {20.0f, 0.0f, -10.0f, 0.0f, "WP1"},      // 20m North, 10m AGL
-        {20.0f, 20.0f, -15.0f, M_PI_2, "WP2"},   // NE corner, 15m AGL
-        {0.0f, 20.0f, -10.0f, M_PI, "WP3"},      // 20m East
-        {0.0f, 0.0f, -10.0f, -M_PI_2, "WP4"},    // Back to start
+        {20.0f, 0.0f, -10.0f, 0.0f, "WP1_East"},
+        {20.0f, 20.0f, -10.0f, M_PI_2, "WP2_NE"},
+        {0.0f, 20.0f, -10.0f, M_PI, "WP3_North"},
+        {0.0f, 0.0f, -10.0f, -M_PI_2, "WP4_Home"},
     };
+    ctx_.current_waypoint = 0;
+    ctx_.mission_complete = false;
 }
 ```
 
-## Parameters
+Waypoints are `{x, y, z, yaw, name}` in local NED metres: x north, y east, z down, so `-10` is 10 m up.
 
-| Parameter | Default | Description |
+## Tuning
+
+These are fields of the context struct in `px4_vehicle_node.cpp`, not ROS parameters. Change them in the source and rebuild.
+
+| Field | Default | Description |
 |-----------|---------|-------------|
 | `geofence_radius` | 100m | Max horizontal distance from home |
 | `geofence_max_alt` | 50m | Maximum altitude AGL |
 | `battery_critical` | 15% | Emergency land threshold |
 | `battery_low` | 25% | RTL threshold |
 | `waypoint_radius` | 1.5m | Waypoint acceptance radius |
-| `obstacle_threshold` | 3m | Obstacle avoidance trigger |
-| `takeoff_alt` | 10m | Default takeoff altitude |
+| `obstacle_threshold` | 3m | Obstacle avoidance trigger (no obstacle source is wired in yet, so this branch never triggers) |
+| `takeoff_alt` | -10 (NED) | Takeoff altitude, 10 m up |
 
 ## Adding Custom Nodes
 
@@ -212,9 +208,9 @@ void setup_mission()
 struct MyCustomCheck : NodeBase
 {
     using EventType = Event;
-    using ContextType = DroneContext;
+    using ContextType = VehicleContext;
 
-    Status process(Event const& e, DroneContext& ctx)
+    Status process(Event const& e, VehicleContext& ctx)
     {
         ctx.active_node = "MyCustomCheck";
         
@@ -232,7 +228,7 @@ struct MyCustomCheck : NodeBase
 
 ### "No executable found"
 
-Ensure px4_msgs is built and sourced:
+px4_msgs has to be built and sourced:
 ```bash
 colcon build --packages-select px4_msgs behavior_tree_lite
 source install/setup.bash
@@ -244,20 +240,15 @@ source install/setup.bash
 2. Verify Micro-XRCE-DDS Agent is on correct port (8888)
 3. Check `XRCE_DOMAIN_ID_OVERRIDE` environment variable
 
-### Drone doesn't arm
+### Vehicle doesn't arm
 
 1. Check "pre_flight_checks_pass" in vehicle_status
-2. Ensure GPS lock in simulation (wait ~30s after SITL start)
+2. Wait for GPS lock, about 30 s after SITL starts
 3. Check RC connection in QGroundControl
 
 ### Offboard mode rejected
 
-PX4 requires setpoints before switching to offboard:
-```cpp
-// The EnableOffboard node handles this:
-// - Sends 10 setpoints at current position
-// - Then switches to OFFBOARD mode
-```
+PX4 only accepts offboard mode once setpoints are streaming. `EnableOffboard` sends 10 setpoints at the current position first, then switches.
 
 ## References
 

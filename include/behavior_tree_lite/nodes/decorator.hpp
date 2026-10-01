@@ -7,10 +7,6 @@
 namespace bt
 {
 
-    // ==========================================
-    // INVERTER (NOT)
-    // ==========================================
-
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Inverter : NodeBase
     {
         using EventType = Event;
@@ -35,11 +31,6 @@ namespace bt
 
         constexpr void reset() { child.reset(); }
     };
-
-    // ==========================================
-    // RETRY
-    // ==========================================
-    // Retries child N times on failure.
 
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Retry : NodeBase
     {
@@ -72,11 +63,6 @@ namespace bt
         }
     };
 
-    // ==========================================
-    // REPEAT
-    // ==========================================
-    // Repeats child N times (or forever if N < 0).
-
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Repeat : NodeBase
     {
         using EventType = Event;
@@ -101,10 +87,9 @@ namespace bt
                 return Status::Failure;
             }
 
-            // Success
             self.child.reset();
             if (self.max_iterations < 0)
-                return Status::Running; // Infinite
+                return Status::Running;
 
             if (++self.completed >= self.max_iterations)
             {
@@ -120,11 +105,6 @@ namespace bt
             child.reset();
         }
     };
-
-    // ==========================================
-    // SUCCEEDER
-    // ==========================================
-    // Always returns Success (wraps child result).
 
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Succeeder : NodeBase
     {
@@ -144,11 +124,6 @@ namespace bt
         constexpr void reset() { child.reset(); }
     };
 
-    // ==========================================
-    // FAILER
-    // ==========================================
-    // Always returns Failure (wraps child result).
-
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Failer : NodeBase
     {
         using EventType = Event;
@@ -166,11 +141,6 @@ namespace bt
 
         constexpr void reset() { child.reset(); }
     };
-
-    // ==========================================
-    // TIMEOUT
-    // ==========================================
-    // Fails if child doesn't complete within N ticks.
 
     template <typename Event, typename Context, IsNode<Event, Context> Child> struct Timeout : NodeBase
     {
@@ -203,11 +173,6 @@ namespace bt
             child.reset();
         }
     };
-
-    // ==========================================
-    // GUARD (Conditional Decorator)
-    // ==========================================
-    // Only processes child if predicate returns true.
 
     template <typename Event, typename Context, typename Pred, IsNode<Event, Context> Child>
         requires std::predicate<Pred, const Context &>

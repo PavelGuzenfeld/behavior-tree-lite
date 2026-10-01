@@ -6,7 +6,6 @@
 
 using namespace bt;
 
-// --- Domain ---
 struct Tick
 {
 };
@@ -18,10 +17,8 @@ using Event = std::variant<Tick, Danger>;
 struct Context
 {
     int battery = 100;
-    bool enemy_visible = false;
+    bool object_visible = false;
 };
-
-// --- Nodes ---
 
 struct CheckBattery : NodeBase
 {
@@ -46,9 +43,9 @@ struct Scan : NodeBase
     using ContextType = Context;
     Status process(const Event &, Context &ctx)
     {
-        if (ctx.enemy_visible)
+        if (ctx.object_visible)
         {
-            std::cout << "[Scan] Enemy Spotted!\n";
+            std::cout << "[Scan] Object spotted\n";
             return Status::Success;
         }
         std::cout << "[Scan] Scanning...\n";
@@ -57,25 +54,25 @@ struct Scan : NodeBase
     void reset() {}
 };
 
-struct Attack : NodeBase
+struct Inspect : NodeBase
 {
     using EventType = Event;
     using ContextType = Context;
     Status process(const Event &, Context &)
     {
-        std::cout << "[Attack] Pow!\n";
+        std::cout << "[Inspect] Inspecting\n";
         return Status::Success;
     }
     void reset() {}
 };
 
-struct RunAway : NodeBase
+struct ReturnHome : NodeBase
 {
     using EventType = Event;
     using ContextType = Context;
     Status process(const Event &, Context &)
     {
-        std::cout << "[RunAway] Running away!\n";
+        std::cout << "[ReturnHome] Heading to the dock\n";
         return Status::Success;
     }
     void reset() {}
@@ -85,11 +82,8 @@ int main()
 {
     Context ctx;
 
-    // === NEW LOGICAL SYNTAX ===
-    // Added outer parentheses to silence -Wparentheses warning
-    auto tree = (CheckBattery{} && (Scan{} || Attack{})) || RunAway{};
+    auto tree = (CheckBattery{} && (Scan{} || Inspect{})) || ReturnHome{};
 
-    // === DEBUG PRINT ===
     std::cout << "=== Behavior Tree Structure ===\n";
     print_tree(tree);
     std::cout << "===============================\n\n";
@@ -97,13 +91,13 @@ int main()
     std::cout << "--- Tick 1: Initial State ---\n";
     tree.process(Tick{}, ctx);
 
-    std::cout << "\n--- Tick 2: Enemy Appears ---\n";
-    ctx.enemy_visible = true;
+    std::cout << "\n--- Tick 2: Object appears ---\n";
+    ctx.object_visible = true;
     tree.process(Tick{}, ctx);
 
     std::cout << "\n--- Tick 3: Low Battery ---\n";
     ctx.battery = 10;
-    ctx.enemy_visible = false;
+    ctx.object_visible = false;
     tree.process(Tick{}, ctx);
 
     return 0;

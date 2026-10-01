@@ -11,7 +11,6 @@ namespace bt
     namespace internal
     {
 
-        // Compile-time type name extraction
         template <typename T> constexpr std::string_view get_type_name()
         {
 #if defined(__clang__)
@@ -42,13 +41,11 @@ namespace bt
 
             auto type_str = name.substr(start, end - start);
 
-            // Clean up "struct" / "class" prefixes
             if (type_str.starts_with("struct "))
                 type_str.remove_prefix(7);
             if (type_str.starts_with("class "))
                 type_str.remove_prefix(6);
 
-            // Clean up GCC verbose output (e.g., "; std::string_view = ...")
             auto semi = type_str.find(';');
             if (semi != std::string_view::npos)
                 type_str = type_str.substr(0, semi);
@@ -56,10 +53,8 @@ namespace bt
             return type_str;
         }
 
-        // Printer helper struct
         template <typename T> struct NodePrinter;
 
-        // Forward decl
         template <typename T> void print_tree_impl(const T &node, int indent, std::ostream &os);
 
         inline void print_indent(int indent, std::ostream &os)
@@ -67,8 +62,6 @@ namespace bt
             for (int i = 0; i < indent; ++i)
                 os << "  ";
         }
-
-        // --- Composite Printers ---
 
         template <typename E, typename C, typename... Children> struct NodePrinter<Sequence<E, C, Children...>>
         {
@@ -102,8 +95,6 @@ namespace bt
                            node.children);
             }
         };
-
-        // --- Decorator Printers ---
 
         template <typename E, typename C, typename Child> struct NodePrinter<Inverter<E, C, Child>>
         {
@@ -175,8 +166,6 @@ namespace bt
             }
         };
 
-        // --- Leaf Printer (Catch-all for User Nodes) ---
-
         template <typename T> struct NodePrinter
         {
             static void print(const T &, int indent, std::ostream &os)
@@ -186,7 +175,6 @@ namespace bt
             }
         };
 
-        // Implementation trampoline
         template <typename T> void print_tree_impl(const T &node, int indent, std::ostream &os)
         {
             NodePrinter<std::decay_t<T>>::print(node, indent, os);
@@ -194,13 +182,6 @@ namespace bt
 
     } // namespace internal
 
-    // ==========================================
-    // PUBLIC API
-    // ==========================================
-
-    /// @brief Prints a text-based graph of the behavior tree structure
-    /// @param node The root node of the tree
-    /// @param os Output stream (default: std::cout)
     template <typename T> void print_tree(const T &node, std::ostream &os = std::cout)
     {
         internal::print_tree_impl(node, 0, os);

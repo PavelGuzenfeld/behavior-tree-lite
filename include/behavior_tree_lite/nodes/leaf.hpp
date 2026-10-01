@@ -9,14 +9,6 @@
 namespace bt
 {
 
-    // ==========================================
-    // ACTION (Template-based, zero overhead)
-    // ==========================================
-    // Wraps a callable as a leaf node. Supports:
-    // - Status(Event, Context) -> direct return
-    // - bool(Event, Context)   -> true=Success, false=Failure
-    // - void(Event, Context)   -> always Success
-
     template <typename Event, typename Context, typename F>
         requires std::invocable<F, const Event &, Context &>
     struct Action : NodeBase
@@ -49,11 +41,6 @@ namespace bt
         constexpr void reset() {}
     };
 
-    // ==========================================
-    // STATEFUL ACTION
-    // ==========================================
-    // Action with internal state that resets.
-
     template <typename Event, typename Context, typename State, typename F> struct StatefulAction : NodeBase
     {
         using EventType = Event;
@@ -79,11 +66,6 @@ namespace bt
         }
     };
 
-    // ==========================================
-    // CONDITION
-    // ==========================================
-    // Returns Success if predicate true, Failure otherwise. Never Running.
-
     template <typename Event, typename Context, typename Pred>
         requires std::predicate<Pred, const Event &, const Context &>
     struct Condition : NodeBase
@@ -103,10 +85,6 @@ namespace bt
         constexpr void reset() {}
     };
 
-    // ==========================================
-    // ALWAYS SUCCESS
-    // ==========================================
-
     template <typename Event, typename Context> struct AlwaysSuccess : NodeBase
     {
         using EventType = Event;
@@ -115,10 +93,6 @@ namespace bt
         constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &) { return Status::Success; }
         constexpr void reset() {}
     };
-
-    // ==========================================
-    // ALWAYS FAILURE
-    // ==========================================
 
     template <typename Event, typename Context> struct AlwaysFailure : NodeBase
     {
@@ -129,10 +103,6 @@ namespace bt
         constexpr void reset() {}
     };
 
-    // ==========================================
-    // ALWAYS RUNNING
-    // ==========================================
-
     template <typename Event, typename Context> struct AlwaysRunning : NodeBase
     {
         using EventType = Event;
@@ -141,11 +111,6 @@ namespace bt
         constexpr Status process([[maybe_unused]] const Event &, [[maybe_unused]] Context &) { return Status::Running; }
         constexpr void reset() {}
     };
-
-    // ==========================================
-    // TYPE-ERASED ACTION (std::function fallback)
-    // ==========================================
-    // For runtime polymorphism when needed.
 
     template <typename Event, typename Context> struct DynamicAction : NodeBase
     {

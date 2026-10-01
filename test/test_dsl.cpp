@@ -38,52 +38,43 @@ namespace
         void reset() {}
     };
 
-    // Test Sequence Operator (&&)
     TEST(DSLTest, SequenceOperator)
     {
         auto seq = NodeA{} && NodeB{};
 
-        // Check type deduction
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, NodeA, NodeB>>);
 
         Context ctx;
         EXPECT_EQ(seq.process(Event{}, ctx), Status::Failure);
     }
 
-    // Test Selector Operator (||)
     TEST(DSLTest, SelectorOperator)
     {
         auto sel = NodeB{} || NodeA{};
 
-        // Check type deduction
         static_assert(std::is_same_v<decltype(sel), Selector<Event, Context, NodeB, NodeA>>);
 
         Context ctx;
         EXPECT_EQ(sel.process(Event{}, ctx), Status::Success);
     }
 
-    // Test Inverter Operator (!)
     TEST(DSLTest, InverterOperator)
     {
-        auto inv = !NodeA{}; // NodeA returns Success
+        auto inv = !NodeA{};
 
-        // Check type deduction
         static_assert(std::is_same_v<decltype(inv), Inverter<Event, Context, NodeA>>);
 
         Context ctx;
         EXPECT_EQ(inv.process(Event{}, ctx), Status::Failure);
     }
 
-    // Test Flattening (Sequence && Node)
     TEST(DSLTest, SequenceFlattening)
     {
-        // (A && B) && C should become Sequence<A, B, C>, not Sequence<Sequence<A, B>, C>
         auto seq = (NodeA{} && NodeB{}) && NodeC{};
 
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, NodeA, NodeB, NodeC>>);
     }
 
-    // Test Flattening (Node && Sequence)
     TEST(DSLTest, SequenceFlatteningRight)
     {
         auto seq = NodeA{} && (NodeB{} && NodeC{});
@@ -91,10 +82,8 @@ namespace
         static_assert(std::is_same_v<decltype(seq), Sequence<Event, Context, NodeA, NodeB, NodeC>>);
     }
 
-    // Test Complex Composition
     TEST(DSLTest, ComplexComposition)
     {
-        // Tree: (A >> B) | (!C)
         auto tree = (NodeA{} && NodeB{}) || (!NodeC{});
 
         using ExpectedTree =
@@ -103,7 +92,6 @@ namespace
         static_assert(std::is_same_v<decltype(tree), ExpectedTree>);
     }
 
-    // Test Deduction from Process Method (User Node without typedefs)
     struct SimpleNode
     {
         Status process(const Event &, Context &) { return Status::Success; }

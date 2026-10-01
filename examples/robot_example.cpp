@@ -1,15 +1,9 @@
-/// @file robot_example.cpp
-/// @brief Example: Robot combat behavior tree
 
 #include <behavior_tree_lite/behavior_tree.hpp>
 #include <iostream>
 #include <variant>
 
 using namespace bt;
-
-// ==========================================
-// EVENT DEFINITIONS
-// ==========================================
 
 struct TickEvent
 {
@@ -19,34 +13,26 @@ struct BatteryEvent
 {
     int voltage;
 };
-struct EnemyEvent
+struct ObjectEvent
 {
     int dist;
     int id;
 };
 
-using Event = std::variant<TickEvent, BatteryEvent, EnemyEvent>;
+using Event = std::variant<TickEvent, BatteryEvent, ObjectEvent>;
 
 struct EventNameVisitor
 {
     std::string_view operator()(const TickEvent &) { return "Tick"; }
     std::string_view operator()(const BatteryEvent &) { return "Battery"; }
-    std::string_view operator()(const EnemyEvent &) { return "Enemy"; }
+    std::string_view operator()(const ObjectEvent &) { return "Object"; }
 };
-
-// ==========================================
-// CONTEXT
-// ==========================================
 
 struct Context
 {
     int battery = 100;
     bool alarm_active = false;
 };
-
-// ==========================================
-// LEAF NODES
-// ==========================================
 
 struct CheckBattery : NodeBase
 {
@@ -70,15 +56,15 @@ struct CheckBattery : NodeBase
     void reset() {}
 };
 
-struct ScanForEnemy : NodeBase
+struct ScanForObject : NodeBase
 {
     using EventType = Event;
     using ContextType = Context;
     Status process(const Event &e, Context &)
     {
-        return std::visit(overloaded{[](const EnemyEvent &en)
+        return std::visit(overloaded{[](const ObjectEvent &en)
                                      {
-                                         std::cout << "  [Scan] Enemy detected at " << en.dist << "m!\n";
+                                         std::cout << "  [Scan] Object detected at " << en.dist << "m!\n";
                                          return Status::Success;
                                      },
                                      [](const TickEvent &) { return Status::Running; },
@@ -91,27 +77,27 @@ struct ScanForEnemy : NodeBase
     void reset() {}
 };
 
-struct FireWeapon : NodeBase
+struct TakeSample : NodeBase
 {
     using EventType = Event;
     using ContextType = Context;
-    int shots = 0;
+    int samples = 0;
 
     Status process(const Event &e, Context &)
     {
         if (std::holds_alternative<TickEvent>(e))
         {
-            shots++;
-            std::cout << "  [Fire] Bang! (" << shots << "/3)\n";
-            if (shots >= 3)
+            samples++;
+            std::cout << "  [Sample] Taken (" << samples << "/3)\n";
+            if (samples >= 3)
                 return Status::Success;
         }
         return Status::Running;
     }
-    void reset() { shots = 0; }
+    void reset() { samples = 0; }
 };
 
-struct MoveToCover : NodeBase
+struct MoveToStation : NodeBase
 {
     using EventType = Event;
     using ContextType = Context;
@@ -137,35 +123,18 @@ struct EmergencySiren : NodeBase
     void reset() {}
 };
 
-// ==========================================
-// MAIN
-// ==========================================
-
 int main()
 {
     std::cout << "=== Behavior Tree Lite - Robot Example ===\n\n";
 
-    /*
-       Tree Structure:
-       ---------------
-       Selector (Root):
-         1. Sequence (Combat Routine):
-             - CheckBattery (Must be > 20%)
-             - Retry(2) -> ScanForEnemy
-             - Parallel (Attack Maneuver):
-                  - MoveToCover
-                  - FireWeapon (3 ticks)
-         2. EmergencySiren (Fallback)
-    */
-
     Selector<Event, Context,
-             Sequence<Event, Context, CheckBattery, Retry<Event, Context, ScanForEnemy>,
-                      Parallel<Event, Context, MoveToCover, FireWeapon>>,
+             Sequence<Event, Context, CheckBattery, Retry<Event, Context, ScanForObject>,
+                      Parallel<Event, Context, MoveToStation, TakeSample>>,
              EmergencySiren>
-        root(Sequence<Event, Context, CheckBattery, Retry<Event, Context, ScanForEnemy>,
-                      Parallel<Event, Context, MoveToCover, FireWeapon>>(
-                 CheckBattery{}, Retry<Event, Context, ScanForEnemy>(2, ScanForEnemy{}),
-                 Parallel<Event, Context, MoveToCover, FireWeapon>(MoveToCover{}, FireWeapon{})),
+        root(Sequence<Event, Context, CheckBattery, Retry<Event, Context, ScanForObject>,
+                      Parallel<Event, Context, MoveToStation, TakeSample>>(
+                 CheckBattery{}, Retry<Event, Context, ScanForObject>(2, ScanForObject{}),
+                 Parallel<Event, Context, MoveToStation, TakeSample>(MoveToStation{}, TakeSample{})),
              EmergencySiren{});
 
     Context ctx;
@@ -178,15 +147,14 @@ int main()
         std::cout << "Tree Status: " << to_string(s) << "\n";
     };
 
-    // Simulation
-    dispatch(TickEvent{});       // Battery OK, scanning...
-    dispatch(TickEvent{});       // Still scanning...
-    dispatch(EnemyEvent{10, 1}); // Enemy! Parallel starts
-    dispatch(TickEvent{});       // Fire again
-    dispatch(BatteryEvent{10});  // Battery critical! Fallback
-    dispatch(BatteryEvent{100}); // Battery restored
-    dispatch(BatteryEvent{5});   // Battery critical again
-    dispatch(TickEvent{});       // Fallback activates
+    dispatch(TickEvent{});
+    dispatch(TickEvent{});
+    dispatch(ObjectEvent{10, 1});
+    dispatch(TickEvent{});
+    dispatch(BatteryEvent{10});
+    dispatch(BatteryEvent{100});
+    dispatch(BatteryEvent{5});
+    dispatch(TickEvent{});
     dispatch(TickEvent{});
 
     std::cout << "\n=== Simulation Complete ===\n";

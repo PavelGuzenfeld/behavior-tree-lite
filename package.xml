@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>behavior_tree_lite</name>
-  <version>0.0.1</version>
+  <version>0.3.1</version>
   <description>A lightweight, header-only, compile-time behavior tree library for C++23/26.</description>
 
   <maintainer email="me@pavelguzenfeld.com">Pavel Guzenfeld</maintainer>
@@ -10,7 +10,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- ROS2 dependencies -->
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
@@ -18,7 +17,6 @@
   <depend>visualization_msgs</depend>
   <depend>tf2_ros</depend>
 
-  <!-- Testing -->
   <test_depend>ament_cmake_gtest</test_depend>
 
   <exec_depend>ament_index_python</exec_depend>
