@@ -123,6 +123,7 @@ struct EmergencySiren : NodeBase
     void reset() {}
 };
 
+// NOLINTNEXTLINE(bugprone-exception-escape)
 int main()
 {
     std::cout << "=== Behavior Tree Lite - Robot Example ===\n\n";

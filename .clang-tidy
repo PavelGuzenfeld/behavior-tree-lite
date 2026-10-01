@@ -1,0 +1,3 @@
+Checks: '-*,bugprone-*,performance-*,clang-analyzer-*'
+WarningsAsErrors: '*'
+HeaderFilterRegex: 'include/behavior_tree_lite/.*'
