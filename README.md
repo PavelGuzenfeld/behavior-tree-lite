@@ -10,7 +10,7 @@ A lightweight, header-only, compile-time behavior tree library for C++23.
 
 ```cpp
 // Define behavior with natural C++ operators
-auto tree = (CheckBattery{} && Attack{}) || RunAway{};
+auto tree = (CheckBattery{} && Inspect{}) || RunAway{};
 tree.process(Tick{}, ctx);  // ~1 ns for full tree evaluation
 ```
 
@@ -92,12 +92,12 @@ struct CheckBattery : NodeBase {
     void reset() {}
 };
 
-struct Attack : NodeBase {
+struct Inspect : NodeBase {
     using EventType = Event;
     using ContextType = Context;
 
     Status process(const Event&, Context&) {
-        std::cout << "Attack!\n";
+        std::cout << "Inspect!\n";
         return Status::Success;
     }
     void reset() {}
@@ -127,8 +127,8 @@ Use logical operators to build the tree:
 int main() {
     Context ctx;
 
-    // Logic: (CheckBattery AND Attack) OR RunAway
-    auto tree = (CheckBattery{} && Attack{}) || RunAway{};
+    // Logic: (CheckBattery AND Inspect) OR RunAway
+    auto tree = (CheckBattery{} && Inspect{}) || RunAway{};
 
     // Visualize
     bt::print_tree(tree);
@@ -190,7 +190,7 @@ All library-provided composites (`Sequence`, `Selector`, `Inverter`, etc.) carry
 
 ```cpp
 auto retry_scan = make_retry<Event, Context>(3, MyScanner{});
-auto tree = retry_scan && Attack{};  // Types flow from retry_scan
+auto tree = retry_scan && Inspect{};  // Types flow from retry_scan
 ```
 
 **Note:** Method 2 (signature deduction) does NOT work with C++23 deducing-this (`this auto&&`) or templated `process()` methods. Use Method 1 for those.
@@ -261,7 +261,7 @@ ros2 topic pub /estop std_msgs/Bool "{data: true}" --once
 Use `std::visit` with the `overloaded` helper to dispatch events:
 
 ```cpp
-using Event = std::variant<Tick, BatteryUpdate, EnemySpotted>;
+using Event = std::variant<Tick, BatteryUpdate, ObjectSpotted>;
 
 struct CheckBattery : NodeBase {
     using EventType = Event;

@@ -4,11 +4,7 @@
 using namespace bt;
 
 namespace
-{ // Anonymous namespace to avoid ODR violations
-
-    // ==========================================
-    // TEST FIXTURES
-    // ==========================================
+{
 
     struct TestEvent
     {
@@ -30,10 +26,6 @@ namespace
         Status process(const E &e, C &ctx) { return predicate(e, ctx) ? Status::Success : Status::Failure; }
         void reset() {}
     };
-
-    // ==========================================
-    // ACTION TESTS
-    // ==========================================
 
     TEST(ActionTest, CallsProcessCallback)
     {
@@ -111,10 +103,6 @@ namespace
         EXPECT_EQ(action.process(evt, ctx), Status::Success);
     }
 
-    // ==========================================
-    // CONDITION TESTS
-    // ==========================================
-
     TEST(ConditionTest, ReturnsTrueAsSuccess)
     {
         TestContext ctx;
@@ -179,10 +167,6 @@ namespace
         EXPECT_NE(cond_false.process(evt, ctx), Status::Running);
     }
 
-    // ==========================================
-    // ALWAYS SUCCESS/FAILURE/RUNNING TESTS
-    // ==========================================
-
     TEST(AlwaysSuccessTest, AlwaysReturnsSuccess)
     {
         TestContext ctx;
@@ -222,10 +206,6 @@ namespace
         }
     }
 
-    // ==========================================
-    // RESET BEHAVIOR
-    // ==========================================
-
     TEST(LeafTest, ResetIsIdempotent)
     {
         TestContext ctx;
@@ -235,7 +215,6 @@ namespace
         AlwaysFailure<TestEvent, TestContext> failure;
         AlwaysRunning<TestEvent, TestContext> running;
 
-        // Multiple resets should be safe
         for (int i = 0; i < 5; ++i)
         {
             success.reset();
@@ -243,10 +222,9 @@ namespace
             running.reset();
         }
 
-        // Behavior should be unchanged
         EXPECT_EQ(success.process(evt, ctx), Status::Success);
         EXPECT_EQ(failure.process(evt, ctx), Status::Failure);
         EXPECT_EQ(running.process(evt, ctx), Status::Running);
     }
 
-} // anonymous namespace
+} // namespace

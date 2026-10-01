@@ -5,11 +5,7 @@
 using namespace bt;
 
 namespace
-{ // Anonymous namespace to avoid ODR violations
-
-    // ==========================================
-    // VARIANT EVENT SYSTEM (like original example)
-    // ==========================================
+{
 
     struct TickEvent
     {
@@ -19,25 +15,21 @@ namespace
     {
         int voltage;
     };
-    struct EnemyEvent
+    struct ObjectEvent
     {
         int dist;
         int id;
     };
 
-    using Event = std::variant<TickEvent, BatteryEvent, EnemyEvent>;
+    using Event = std::variant<TickEvent, BatteryEvent, ObjectEvent>;
 
     struct RobotContext
     {
         int battery = 100;
         bool alarm_active = false;
-        int enemies_detected = 0;
-        int shots_fired = 0;
+        int objects_detected = 0;
+        int samples_taken = 0;
     };
-
-    // ==========================================
-    // DOMAIN-SPECIFIC NODES
-    // ==========================================
 
     struct CheckBattery : NodeBase
     {
@@ -55,13 +47,13 @@ namespace
         void reset() {}
     };
 
-    struct ScanForEnemy : NodeBase
+    struct ScanForObject : NodeBase
     {
         Status process(const Event &e, RobotContext &ctx)
         {
-            return std::visit(overloaded{[&](const EnemyEvent &)
+            return std::visit(overloaded{[&](const ObjectEvent &)
                                          {
-                                             ctx.enemies_detected++;
+                                             ctx.objects_detected++;
                                              return Status::Success;
                                          },
                                          [](const TickEvent &) { return Status::Running; },
@@ -74,25 +66,25 @@ namespace
         void reset() {}
     };
 
-    struct FireWeapon : NodeBase
+    struct TakeSample : NodeBase
     {
-        int shots_needed;
-        int shots = 0;
+        int samples_needed;
+        int samples = 0;
 
-        explicit FireWeapon(int s = 3) : shots_needed(s) {}
+        explicit TakeSample(int s = 3) : samples_needed(s) {}
 
         Status process(const Event &e, RobotContext &ctx)
         {
             if (std::holds_alternative<TickEvent>(e))
             {
-                shots++;
-                ctx.shots_fired++;
-                if (shots >= shots_needed)
+                samples++;
+                ctx.samples_taken++;
+                if (samples >= samples_needed)
                     return Status::Success;
             }
             return Status::Running;
         }
-        void reset() { shots = 0; }
+        void reset() { samples = 0; }
     };
 
     struct ActivateAlarm : NodeBase
@@ -104,10 +96,6 @@ namespace
         }
         void reset() {}
     };
-
-    // ==========================================
-    // INTEGRATION TESTS
-    // ==========================================
 
     TEST(IntegrationTest, VariantEventDispatch)
     {
@@ -126,55 +114,49 @@ namespace
     TEST(IntegrationTest, ScanWaitsForEnemy)
     {
         RobotContext ctx;
-        ScanForEnemy scan;
+        ScanForObject scan;
 
         EXPECT_EQ(scan.process(TickEvent{}, ctx), Status::Running);
         EXPECT_EQ(scan.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_EQ(ctx.enemies_detected, 0);
+        EXPECT_EQ(ctx.objects_detected, 0);
 
-        EXPECT_EQ(scan.process(EnemyEvent{100, 1}, ctx), Status::Success);
-        EXPECT_EQ(ctx.enemies_detected, 1);
+        EXPECT_EQ(scan.process(ObjectEvent{100, 1}, ctx), Status::Success);
+        EXPECT_EQ(ctx.objects_detected, 1);
     }
 
-    TEST(IntegrationTest, CombatSequence)
+    TEST(IntegrationTest, InspectionSequence)
     {
         RobotContext ctx;
         ctx.battery = 100;
 
-        Sequence<Event, RobotContext, CheckBattery, ScanForEnemy, FireWeapon> combat(CheckBattery(20), ScanForEnemy{},
-                                                                                     FireWeapon(3));
+        Sequence<Event, RobotContext, CheckBattery, ScanForObject, TakeSample> inspection(
+            CheckBattery(20), ScanForObject{}, TakeSample(3));
 
-        // Battery OK, scanning...
-        EXPECT_EQ(combat.process(TickEvent{}, ctx), Status::Running);
+        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
 
-        // Enemy detected! FireWeapon starts but only fires on Tick
-        EXPECT_EQ(combat.process(EnemyEvent{50, 1}, ctx), Status::Running);
-        EXPECT_EQ(ctx.enemies_detected, 1);
-        EXPECT_EQ(ctx.shots_fired, 0); // EnemyEvent doesn't trigger fire
+        EXPECT_EQ(inspection.process(ObjectEvent{50, 1}, ctx), Status::Running);
+        EXPECT_EQ(ctx.objects_detected, 1);
+        EXPECT_EQ(ctx.samples_taken, 0);
 
-        // First tick - first shot
-        EXPECT_EQ(combat.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_EQ(ctx.shots_fired, 1);
+        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
+        EXPECT_EQ(ctx.samples_taken, 1);
 
-        // Second tick - second shot
-        EXPECT_EQ(combat.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_EQ(ctx.shots_fired, 2);
+        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
+        EXPECT_EQ(ctx.samples_taken, 2);
 
-        // Third tick - final shot, completes
-        EXPECT_EQ(combat.process(TickEvent{}, ctx), Status::Success);
-        EXPECT_EQ(ctx.shots_fired, 3);
+        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Success);
+        EXPECT_EQ(ctx.samples_taken, 3);
     }
 
     TEST(IntegrationTest, FallbackOnLowBattery)
     {
         RobotContext ctx;
-        ctx.battery = 10; // Low battery!
+        ctx.battery = 10;
 
-        Selector<Event, RobotContext, Sequence<Event, RobotContext, CheckBattery, ScanForEnemy>, ActivateAlarm> root(
-            Sequence<Event, RobotContext, CheckBattery, ScanForEnemy>(CheckBattery(20), ScanForEnemy{}),
+        Selector<Event, RobotContext, Sequence<Event, RobotContext, CheckBattery, ScanForObject>, ActivateAlarm> root(
+            Sequence<Event, RobotContext, CheckBattery, ScanForObject>(CheckBattery(20), ScanForObject{}),
             ActivateAlarm{});
 
-        // Battery fails, alarm activates
         auto result = root.process(TickEvent{}, ctx);
         EXPECT_EQ(result, Status::Success);
         EXPECT_TRUE(ctx.alarm_active);
@@ -182,7 +164,6 @@ namespace
 
     TEST(IntegrationTest, RetryOnScanFailure)
     {
-        // Simulate a flaky scanner that fails twice then succeeds
         struct FlakyScan : NodeBase
         {
             int attempts = 0;
@@ -197,28 +178,25 @@ namespace
                     return Status::Failure;
                 return Status::Success;
             }
-            void reset() { /* Don't reset attempts - we want cumulative */ }
+            void reset() {}
         };
 
         RobotContext ctx;
         Retry<Event, RobotContext, FlakyScan> retry_scan(5, FlakyScan(2));
 
-        // First attempt fails
         EXPECT_EQ(retry_scan.process(TickEvent{}, ctx), Status::Running);
 
-        // Second attempt fails
         EXPECT_EQ(retry_scan.process(TickEvent{}, ctx), Status::Running);
 
-        // Third attempt succeeds
         EXPECT_EQ(retry_scan.process(TickEvent{}, ctx), Status::Success);
     }
 
-    TEST(IntegrationTest, ParallelCombatManeuver)
+    TEST(IntegrationTest, ParallelInspection)
     {
-        struct MoveToCover : NodeBase
+        struct MoveToStation : NodeBase
         {
             bool *moved;
-            explicit MoveToCover(bool *m) : moved(m) {}
+            explicit MoveToStation(bool *m) : moved(m) {}
             Status process(const Event &, RobotContext &)
             {
                 *moved = true;
@@ -230,16 +208,14 @@ namespace
         RobotContext ctx;
         bool moved = false;
 
-        Parallel<Event, RobotContext, MoveToCover, FireWeapon> maneuver(MoveToCover(&moved), FireWeapon(2));
+        Parallel<Event, RobotContext, MoveToStation, TakeSample> maneuver(MoveToStation(&moved), TakeSample(2));
 
-        // First tick: Move completes, Fire starts
         EXPECT_EQ(maneuver.process(TickEvent{}, ctx), Status::Running);
         EXPECT_TRUE(moved);
-        EXPECT_EQ(ctx.shots_fired, 1);
+        EXPECT_EQ(ctx.samples_taken, 1);
 
-        // Second tick: Fire completes
         EXPECT_EQ(maneuver.process(TickEvent{}, ctx), Status::Success);
-        EXPECT_EQ(ctx.shots_fired, 2);
+        EXPECT_EQ(ctx.samples_taken, 2);
     }
 
     TEST(IntegrationTest, ComplexNestedTree)
@@ -247,34 +223,23 @@ namespace
         RobotContext ctx;
         ctx.battery = 100;
 
-        // Tree structure:
-        // Selector
-        //   ├─ Sequence (Combat)
-        //   │    ├─ CheckBattery
-        //   │    └─ Parallel
-        //   │         ├─ ScanForEnemy
-        //   │         └─ Inverter(AlwaysFailure)  // becomes Success
-        //   └─ ActivateAlarm (Fallback)
-
         using AlwaysFail = AlwaysFailure<Event, RobotContext>;
 
         Selector<Event, RobotContext,
                  Sequence<Event, RobotContext, CheckBattery,
-                          Parallel<Event, RobotContext, ScanForEnemy, Inverter<Event, RobotContext, AlwaysFail>>>,
+                          Parallel<Event, RobotContext, ScanForObject, Inverter<Event, RobotContext, AlwaysFail>>>,
                  ActivateAlarm>
             root(Sequence<Event, RobotContext, CheckBattery,
-                          Parallel<Event, RobotContext, ScanForEnemy, Inverter<Event, RobotContext, AlwaysFail>>>(
+                          Parallel<Event, RobotContext, ScanForObject, Inverter<Event, RobotContext, AlwaysFail>>>(
                      CheckBattery(20),
-                     Parallel<Event, RobotContext, ScanForEnemy, Inverter<Event, RobotContext, AlwaysFail>>(
-                         ScanForEnemy{}, Inverter<Event, RobotContext, AlwaysFail>(AlwaysFail{}))),
+                     Parallel<Event, RobotContext, ScanForObject, Inverter<Event, RobotContext, AlwaysFail>>(
+                         ScanForObject{}, Inverter<Event, RobotContext, AlwaysFail>(AlwaysFail{}))),
                  ActivateAlarm{});
 
-        // Tick: Battery OK, parallel running (scan waiting, inverter succeeds)
         EXPECT_EQ(root.process(TickEvent{}, ctx), Status::Running);
         EXPECT_FALSE(ctx.alarm_active);
 
-        // Enemy event: Scan succeeds, parallel completes
-        EXPECT_EQ(root.process(EnemyEvent{100, 1}, ctx), Status::Success);
+        EXPECT_EQ(root.process(ObjectEvent{100, 1}, ctx), Status::Success);
         EXPECT_FALSE(ctx.alarm_active);
     }
 
@@ -282,18 +247,14 @@ namespace
     {
         RobotContext ctx;
 
-        FireWeapon fire(3);
-        fire.process(TickEvent{}, ctx);
-        fire.process(TickEvent{}, ctx);
-        EXPECT_EQ(fire.shots, 2);
+        TakeSample sampler(3);
+        sampler.process(TickEvent{}, ctx);
+        sampler.process(TickEvent{}, ctx);
+        EXPECT_EQ(sampler.samples, 2);
 
-        fire.reset();
-        EXPECT_EQ(fire.shots, 0);
+        sampler.reset();
+        EXPECT_EQ(sampler.samples, 0);
     }
-
-    // ==========================================
-    // FACTORY HELPER TESTS
-    // ==========================================
 
     TEST(FactoryTest, MakeSequence)
     {
@@ -328,4 +289,4 @@ namespace
         EXPECT_EQ(inv.process(TickEvent{}, ctx), Status::Success);
     }
 
-} // anonymous namespace
+} // namespace

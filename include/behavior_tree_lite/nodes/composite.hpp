@@ -9,11 +9,6 @@
 namespace bt
 {
 
-    // ==========================================
-    // SEQUENCE (AND)
-    // ==========================================
-    // Runs children in order. Fails if one fails. Succeeds if ALL succeed.
-
     template <typename Event, typename Context, IsNode<Event, Context>... Children> struct Sequence : NodeBase
     {
         using EventType = Event;
@@ -60,11 +55,6 @@ namespace bt
         }
     };
 
-    // ==========================================
-    // SELECTOR (OR / Fallback)
-    // ==========================================
-    // Runs children in order. Succeeds if one succeeds. Fails if ALL fail.
-
     template <typename Event, typename Context, IsNode<Event, Context>... Children> struct Selector : NodeBase
     {
         using EventType = Event;
@@ -110,12 +100,6 @@ namespace bt
             std::apply([](auto &...c) { (c.reset(), ...); }, children);
         }
     };
-
-    // ==========================================
-    // PARALLEL (Concurrent)
-    // ==========================================
-    // Runs ALL children every tick. Succeeds if ALL succeed. Fails if ANY fail.
-    // Fail-fast: on failure, all children (including still-running ones) are reset.
 
     template <typename Event, typename Context, IsNode<Event, Context>... Children> struct Parallel : NodeBase
     {

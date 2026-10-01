@@ -4,11 +4,7 @@
 using namespace bt;
 
 namespace
-{ // Anonymous namespace to avoid ODR violations
-
-    // ==========================================
-    // STATUS TESTS
-    // ==========================================
+{
 
     TEST(TypesTest, StatusToString)
     {
@@ -24,10 +20,6 @@ namespace
         EXPECT_NE(s, Status::Running);
     }
 
-    // ==========================================
-    // OVERLOADED VISITOR TESTS
-    // ==========================================
-
     TEST(TypesTest, OverloadedVisitor)
     {
         std::variant<int, double, std::string> v = 42;
@@ -42,10 +34,6 @@ namespace
 
         EXPECT_EQ(result, "int: 42");
     }
-
-    // ==========================================
-    // CONCEPT TESTS
-    // ==========================================
 
     struct MockEvent
     {
@@ -77,10 +65,6 @@ namespace
         static_assert(!IsNode<InvalidNodeNoReset, MockEvent, MockContext>);
     }
 
-    // ==========================================
-    // NODEBASE TESTS
-    // ==========================================
-
     TEST(TypesTest, NodeBaseMovable)
     {
         static_assert(std::is_move_constructible_v<NodeBase>);
@@ -93,4 +77,4 @@ namespace
         static_assert(!std::is_copy_assignable_v<NodeBase>);
     }
 
-} // anonymous namespace
+} // namespace

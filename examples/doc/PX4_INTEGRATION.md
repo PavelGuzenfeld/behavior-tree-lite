@@ -164,7 +164,7 @@ ros2 topic pub /fmu/out/battery_status px4_msgs/msg/BatteryStatus \
 
 ```bash
 # Watch behavior tree status
-ros2 topic echo /drone/bt_status
+ros2 topic echo /vehicle/bt_status
 
 # Watch vehicle status
 ros2 topic echo /fmu/out/vehicle_status
@@ -172,7 +172,7 @@ ros2 topic echo /fmu/out/vehicle_status
 
 ## Customizing the Mission
 
-Edit the `setup_mission()` function in `px4_drone_node.cpp`:
+Edit the `setup_mission()` function in `px4_vehicle_node.cpp`:
 
 ```cpp
 void setup_mission()
@@ -189,7 +189,7 @@ void setup_mission()
 
 ## Tuning
 
-These are fields of the context struct in `px4_drone_node.cpp`, not ROS parameters. Change them in the source and rebuild.
+These are fields of the context struct in `px4_vehicle_node.cpp`, not ROS parameters. Change them in the source and rebuild.
 
 | Field | Default | Description |
 |-----------|---------|-------------|
@@ -198,7 +198,7 @@ These are fields of the context struct in `px4_drone_node.cpp`, not ROS paramete
 | `battery_critical` | 15% | Emergency land threshold |
 | `battery_low` | 25% | RTL threshold |
 | `waypoint_radius` | 1.5m | Waypoint acceptance radius |
-| `obstacle_threshold` | 3m | Obstacle avoidance trigger (no obstacle source is wired in yet, so this branch never fires) |
+| `obstacle_threshold` | 3m | Obstacle avoidance trigger (no obstacle source is wired in yet, so this branch never triggers) |
 | `takeoff_alt` | 10m | Default takeoff altitude |
 
 ## Adding Custom Nodes
@@ -207,9 +207,9 @@ These are fields of the context struct in `px4_drone_node.cpp`, not ROS paramete
 struct MyCustomCheck : NodeBase
 {
     using EventType = Event;
-    using ContextType = DroneContext;
+    using ContextType = VehicleContext;
 
-    Status process(Event const& e, DroneContext& ctx)
+    Status process(Event const& e, VehicleContext& ctx)
     {
         ctx.active_node = "MyCustomCheck";
         
@@ -239,7 +239,7 @@ source install/setup.bash
 2. Verify Micro-XRCE-DDS Agent is on correct port (8888)
 3. Check `XRCE_DOMAIN_ID_OVERRIDE` environment variable
 
-### Drone doesn't arm
+### Vehicle doesn't arm
 
 1. Check "pre_flight_checks_pass" in vehicle_status
 2. Ensure GPS lock in simulation (wait ~30s after SITL start)

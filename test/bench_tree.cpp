@@ -6,10 +6,6 @@
 
 using namespace bt;
 
-// ==========================================
-// BENCHMARK TYPES
-// ==========================================
-
 struct TickEvent
 {
     double dt = 0.016;
@@ -25,10 +21,6 @@ struct Context
     int counter = 0;
     bool flag = true;
 };
-
-// ==========================================
-// BENCHMARK NODES
-// ==========================================
 
 struct IncrementNode : NodeBase
 {
@@ -71,11 +63,6 @@ struct RunningFor : NodeBase
     void reset() { current = 0; }
 };
 
-// ==========================================
-// BENCHMARK HARNESS
-// ==========================================
-
-// Prevent the compiler from optimizing away the result
 template <typename T> void do_not_optimize(T const &value)
 {
     asm volatile("" : : "r,m"(value) : "memory");
@@ -90,7 +77,6 @@ struct BenchResult
 
 template <typename Fn> BenchResult bench(const char *name, std::size_t iterations, Fn &&fn)
 {
-    // Warmup
     for (std::size_t i = 0; i < iterations / 10; ++i)
         fn();
 
@@ -108,10 +94,6 @@ void print_result(const BenchResult &r)
     std::printf("  %-45s %10.1f ns/op  (%zu iterations)\n", r.name, r.ns_per_op, r.iterations);
 }
 
-// ==========================================
-// BENCHMARKS
-// ==========================================
-
 int main()
 {
     constexpr std::size_t N = 1'000'000;
@@ -119,7 +101,6 @@ int main()
     std::printf("behavior_tree_lite v%d.%d.%d — Performance Benchmarks\n", version.major, version.minor, version.patch);
     std::printf("=====================================================\n\n");
 
-    // --- Leaf node throughput ---
     std::printf("Leaf Nodes:\n");
     {
         Context ctx;
@@ -143,7 +124,6 @@ int main()
         print_result(bench("AlwaysSuccess (stateless)", N, [&] { do_not_optimize(node.process(TickEvent{}, ctx)); }));
     }
 
-    // --- Composite throughput ---
     std::printf("\nComposite Nodes:\n");
     {
         Context ctx;
@@ -162,7 +142,6 @@ int main()
         print_result(bench("Parallel(3 children)", N, [&] { do_not_optimize(par.process(TickEvent{}, ctx)); }));
     }
 
-    // --- Decorator throughput ---
     std::printf("\nDecorator Nodes:\n");
     {
         Context ctx;
@@ -175,7 +154,6 @@ int main()
         print_result(bench("Guard(predicate, Action)", N, [&] { do_not_optimize(guard.process(TickEvent{}, ctx)); }));
     }
 
-    // --- DSL-composed tree ---
     std::printf("\nDSL-Composed Trees:\n");
     {
         Context ctx;
@@ -184,11 +162,9 @@ int main()
             bench("(Check && Action) || Fallback", N, [&] { do_not_optimize(tree.process(TickEvent{}, ctx)); }));
     }
 
-    // --- Deep nesting ---
     std::printf("\nDeep Nesting:\n");
     {
         Context ctx;
-        // 5-level deep tree
         auto tree = make_selector<Event, Context>(
             make_sequence<Event, Context>(
                 CheckFlag{},
@@ -198,7 +174,6 @@ int main()
         print_result(bench("5-level nested tree", N, [&] { do_not_optimize(tree.process(TickEvent{}, ctx)); }));
     }
 
-    // --- Running/resume overhead ---
     std::printf("\nRunning State (resume overhead):\n");
     {
         Context ctx;
@@ -207,7 +182,6 @@ int main()
             bench("Sequence with Running child (resume)", N, [&] { do_not_optimize(seq.process(TickEvent{}, ctx)); }));
     }
 
-    // --- Variant event dispatch ---
     std::printf("\nVariant Event Dispatch:\n");
     {
         Context ctx;

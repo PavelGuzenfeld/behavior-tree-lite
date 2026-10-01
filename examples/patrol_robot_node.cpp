@@ -1,8 +1,3 @@
-/// @file patrol_robot_node.cpp
-/// @brief Complex ROS2 behavior tree example with DSL and visualization
-///
-/// this file originally published markers in frame "map" while publishing exactly zero tf.
-/// rviz can't draw imaginary coordinate frames. shocking, i know.
 
 #include "behavior_tree_lite/behavior_tree.hpp"
 #include "behavior_tree_lite/debug.hpp"
@@ -16,7 +11,6 @@
 #include <std_msgs/msg/string.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-// tf so rviz can stop complaining like it's paid per warning
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_ros/transform_broadcaster.h>
 
@@ -31,10 +25,6 @@
 
 using namespace bt;
 using namespace std::chrono_literals;
-
-// ============================================================================
-// EVENTS
-// ============================================================================
 
 struct TickEvent
 {
@@ -53,10 +43,6 @@ struct EmergencyStop
 };
 
 using Event = std::variant<TickEvent, BatteryUpdate, LaserUpdate, EmergencyStop>;
-
-// ============================================================================
-// CONTEXT (Blackboard)
-// ============================================================================
 
 struct RobotContext
 {
@@ -79,10 +65,6 @@ struct RobotContext
         }
     }
 };
-
-// ============================================================================
-// LEAF NODES (DSL-compatible)
-// ============================================================================
 
 struct CheckBattery : NodeBase
 {
@@ -297,24 +279,17 @@ struct Idle : NodeBase
     void reset() {}
 };
 
-// ============================================================================
-// ROS2 NODE
-// ============================================================================
-
 class PatrolRobotNode : public rclcpp::Node
 {
   public:
     PatrolRobotNode() : Node("patrol_robot")
     {
-        // publishers
         cmd_vel_pub_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
         status_pub_ = create_publisher<std_msgs::msg::String>("/robot_status", 10);
         marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("/bt_markers", 10);
 
-        // tf broadcaster so frames actually exist
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-        // subscribers
         battery_sub_ =
             create_subscription<std_msgs::msg::Float32>("/battery", 10, [this](std_msgs::msg::Float32::SharedPtr msg)
                                                         { events_.push_back(BatteryUpdate{msg->data}); });
@@ -348,42 +323,35 @@ class PatrolRobotNode : public rclcpp::Node
   private:
     void tick_()
     {
-        // process sensor events
         for (auto const &e : events_)
         {
             tree_.process(e, ctx_);
         }
         events_.clear();
 
-        // tick tree
         tree_.process(TickEvent{}, ctx_);
 
-        // battery drain
         ctx_.battery_level = std::max(0.0f, ctx_.battery_level - 0.1f);
 
-        // fake motion integration so rviz has something to move
         integrate_fake_motion_(0.1);
 
-        // publish cmd_vel + status
         cmd_vel_pub_->publish(ctx_.cmd_vel);
 
         std_msgs::msg::String status;
         status.data = ctx_.active_node;
         status_pub_->publish(status);
 
-        // publish tf + markers
         publish_tf_();
         publish_markers_();
 
-        // terminal spam UI
         print_status_();
     }
 
     void integrate_fake_motion_(double const dt) noexcept
     {
-        static double const k_speed = 0.6;  // m/s
-        static double const k_extent = 6.0; // how far from center
-        static double const k_eps = 0.05;   // snap tolerance
+        static double const k_speed = 0.6;
+        static double const k_extent = 6.0;
+        static double const k_eps = 0.05;
 
         auto step_towards = [&](double &v, double const target, double const step)
         {
@@ -396,65 +364,61 @@ class PatrolRobotNode : public rclcpp::Node
             v += (d > 0.0) ? step : -step;
         };
 
-        // go home while charging / going to charger
         if ((ctx_.active_node == "Charge") || (ctx_.active_node == "GoToCharger"))
         {
             double const step = k_speed * dt;
             step_towards(x_, 0.0, step);
             step_towards(y_, 0.0, step);
 
-            // face home-ish (looks nicer)
             yaw_ = std::atan2(-y_, -x_);
             return;
         }
 
-        // cross pattern targets (always pass through center)
         double tx = 0.0;
         double ty = 0.0;
 
-        // make sure you have: int patrol_leg_ = 0; as a class member
         switch (patrol_leg_)
         {
         case 0:
             tx = +k_extent;
             ty = 0.0;
             yaw_ = 0.0;
-            break; // to +x
+            break;
         case 1:
             tx = 0.0;
             ty = 0.0;
             yaw_ = M_PI;
-            break; // back center
+            break;
         case 2:
             tx = -k_extent;
             ty = 0.0;
             yaw_ = M_PI;
-            break; // to -x
+            break;
         case 3:
             tx = 0.0;
             ty = 0.0;
             yaw_ = 0.0;
-            break; // back center
+            break;
         case 4:
             tx = 0.0;
             ty = +k_extent;
             yaw_ = M_PI_2;
-            break; // to +y
+            break;
         case 5:
             tx = 0.0;
             ty = 0.0;
             yaw_ = -M_PI_2;
-            break; // back center
+            break;
         case 6:
             tx = 0.0;
             ty = -k_extent;
             yaw_ = -M_PI_2;
-            break; // to -y
+            break;
         default:
             tx = 0.0;
             ty = 0.0;
             yaw_ = M_PI_2;
-            break; // back center
+            break;
         }
 
         double const step = k_speed * dt;
@@ -478,7 +442,6 @@ class PatrolRobotNode : public rclcpp::Node
         t.transform.translation.y = y_;
         t.transform.translation.z = 0.0;
 
-        // yaw-only quaternion
         double const half = yaw_ * 0.5;
         t.transform.rotation.x = 0.0;
         t.transform.rotation.y = 0.0;
@@ -520,7 +483,6 @@ class PatrolRobotNode : public rclcpp::Node
         std::cout << "│ Active: " << std::setw(42) << std::left << ctx_.active_node << "│\n";
         std::cout << "├────────────────────────────────────────────────────┤\n";
 
-        // battery bar
         std::cout << "│ Battery: [";
         int const bars = static_cast<int>(ctx_.battery_level / 5.0f);
         for (int i = 0; i < 20; ++i)
@@ -561,7 +523,6 @@ class PatrolRobotNode : public rclcpp::Node
 
         auto stamp = now();
 
-        // ---- robot body (visible cube) ----
         {
             visualization_msgs::msg::Marker body;
             body.header.frame_id = "base_link";
@@ -588,13 +549,12 @@ class PatrolRobotNode : public rclcpp::Node
             body.color.g = 0.8f;
             body.color.b = 1.0f;
 
-            body.lifetime = rclcpp::Duration::from_seconds(0.0); // forever
+            body.lifetime = rclcpp::Duration::from_seconds(0.0);
             body.frame_locked = true;
 
             markers.markers.push_back(body);
         }
 
-        // ---- bt text markers ----
         auto make_text = [&](int const id, float const x, float const y, std::string const &text, bool const active)
         {
             visualization_msgs::msg::Marker m;
@@ -621,7 +581,7 @@ class PatrolRobotNode : public rclcpp::Node
 
             m.text = text;
 
-            m.lifetime = rclcpp::Duration::from_seconds(0.0); // forever
+            m.lifetime = rclcpp::Duration::from_seconds(0.0);
             m.frame_locked = false;
 
             return m;
@@ -640,9 +600,6 @@ class PatrolRobotNode : public rclcpp::Node
         marker_pub_->publish(markers);
     }
 
-    // =========================================================================
-    // BEHAVIOR TREE - DSL DEFINITION
-    // =========================================================================
     decltype((!CheckEmergency{} && Halt{}) || (!CheckBattery{} && GoToCharger{} && Charge{}) ||
              (CheckBattery{} && ((CheckObstacle{} && Navigate{}) || Avoid{})) || Idle{}) tree_ =
         (!CheckEmergency{} && Halt{}) || (!CheckBattery{} && GoToCharger{} && Charge{}) ||
@@ -651,16 +608,13 @@ class PatrolRobotNode : public rclcpp::Node
     RobotContext ctx_{};
     std::vector<Event> events_{};
 
-    // fake pose (because you don't have nav2, slam, or any odom)
     double x_ = 0.0;
     double y_ = 0.0;
     double yaw_ = 0.0;
 
-    // box path state
-    int box_leg_ = 0; // 0:+x, 1:+y, 2:-x, 3:-y
+    int box_leg_ = 0;
     int patrol_leg_ = 0;
 
-    // ros2 interfaces
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_pub_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_pub_;

@@ -4,11 +4,7 @@
 using namespace bt;
 
 namespace
-{ // Anonymous namespace to avoid ODR violations
-
-    // ==========================================
-    // TEST FIXTURES
-    // ==========================================
+{
 
     struct TestEvent
     {
@@ -83,10 +79,6 @@ namespace
         void reset() {}
     };
 
-    // ==========================================
-    // SEQUENCE TESTS
-    // ==========================================
-
     TEST(SequenceTest, AllChildrenSucceed)
     {
         TestContext ctx;
@@ -142,24 +134,17 @@ namespace
         Sequence<TestEvent, TestContext, SuccessNode, RunningNode, SuccessNode> seq(
             SuccessNode("a"), RunningNode(3, "running"), SuccessNode("b"));
 
-        // First tick: a succeeds, running returns Running
         auto r1 = seq.process(evt, ctx);
         EXPECT_EQ(r1, Status::Running);
 
-        // Second tick: running still Running
         auto r2 = seq.process(evt, ctx);
         EXPECT_EQ(r2, Status::Running);
 
-        // Third tick: running succeeds, b succeeds
         ctx.log.clear();
         auto r3 = seq.process(evt, ctx);
         EXPECT_EQ(r3, Status::Success);
         EXPECT_EQ(ctx.log.back(), "b");
     }
-
-    // ==========================================
-    // SELECTOR TESTS
-    // ==========================================
 
     TEST(SelectorTest, FirstChildSucceeds)
     {
@@ -212,19 +197,13 @@ namespace
         Selector<TestEvent, TestContext, FailureNode, RunningNode, SuccessNode> sel(
             FailureNode("fail"), RunningNode(2, "running"), SuccessNode("skip"));
 
-        // First tick
         auto r1 = sel.process(evt, ctx);
         EXPECT_EQ(r1, Status::Running);
 
-        // Second tick: running completes with success
         ctx.log.clear();
         auto r2 = sel.process(evt, ctx);
         EXPECT_EQ(r2, Status::Success);
     }
-
-    // ==========================================
-    // PARALLEL TESTS
-    // ==========================================
 
     TEST(ParallelTest, AllChildrenSucceed)
     {
@@ -259,11 +238,9 @@ namespace
         Parallel<TestEvent, TestContext, RunningNode, SuccessNode> par(RunningNode(2, "running"),
                                                                        SuccessNode("instant"));
 
-        // First tick: instant succeeds, running still going
         auto r1 = par.process(evt, ctx);
         EXPECT_EQ(r1, Status::Running);
 
-        // Second tick: running completes
         auto r2 = par.process(evt, ctx);
         EXPECT_EQ(r2, Status::Success);
     }
@@ -281,10 +258,6 @@ namespace
         EXPECT_EQ(counter1, 1);
         EXPECT_EQ(counter2, 1);
     }
-
-    // ==========================================
-    // SINGLE CHILD TESTS
-    // ==========================================
 
     TEST(SequenceTest, SingleChildSuccess)
     {
@@ -353,18 +326,11 @@ namespace
         EXPECT_EQ(result, Status::Failure);
     }
 
-    // ==========================================
-    // DEEPLY NESTED TESTS
-    // ==========================================
-
     TEST(CompositeTest, DeeplyNestedSequenceInSelector)
     {
         TestContext ctx;
         TestEvent evt;
 
-        // Selector
-        //   ├─ Sequence(Failure, Success)  → Failure
-        //   └─ Sequence(Success, Success)  → Success
         Selector<TestEvent, TestContext, Sequence<TestEvent, TestContext, FailureNode, SuccessNode>,
                  Sequence<TestEvent, TestContext, SuccessNode, SuccessNode>>
             root(Sequence<TestEvent, TestContext, FailureNode, SuccessNode>(FailureNode("f"), SuccessNode("skip")),
@@ -383,11 +349,6 @@ namespace
         TestContext ctx;
         TestEvent evt;
 
-        // Sequence
-        //   ├─ Selector
-        //   │    ├─ Failure
-        //   │    └─ Success("inner")
-        //   └─ Success("outer")
         Sequence<TestEvent, TestContext, Selector<TestEvent, TestContext, FailureNode, SuccessNode>, SuccessNode> root(
             Selector<TestEvent, TestContext, FailureNode, SuccessNode>(FailureNode("f"), SuccessNode("inner")),
             SuccessNode("outer"));
@@ -399,10 +360,6 @@ namespace
         EXPECT_EQ(ctx.log[1], "inner");
         EXPECT_EQ(ctx.log[2], "outer");
     }
-
-    // ==========================================
-    // RESET TESTS
-    // ==========================================
 
     TEST(CompositeTest, SequenceReset)
     {
@@ -434,4 +391,4 @@ namespace
         }
     }
 
-} // anonymous namespace
+} // namespace
