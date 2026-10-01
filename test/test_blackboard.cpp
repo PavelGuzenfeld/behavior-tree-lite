@@ -1,7 +1,7 @@
 #include "behavior_tree_lite/behavior_tree.hpp"
 #include "behavior_tree_lite/blackboard.hpp"
 #include "behavior_tree_lite/dsl.hpp"
-#include <gtest/gtest.h>
+#include <doctest/doctest.h>
 #include <string>
 
 namespace blackboard_test
@@ -28,57 +28,57 @@ namespace blackboard_test
     template <typename B, typename K>
     concept CanSet = requires(B b) { b.template set<K>(1); };
 
-    TEST(BlackboardTest, ValuesStartValueInitialised)
+    TEST_CASE("BlackboardTest.ValuesStartValueInitialised")
     {
         Board board;
 
-        EXPECT_EQ(board.get<Battery>(), 0);
-        EXPECT_EQ(board.get<Callsign>(), "");
+        CHECK_EQ(board.get<Battery>(), 0);
+        CHECK_EQ(board.get<Callsign>(), "");
     }
 
-    TEST(BlackboardTest, SetThenGetReturnsTheStoredValue)
+    TEST_CASE("BlackboardTest.SetThenGetReturnsTheStoredValue")
     {
         Board board;
 
         board.set<Battery>(80);
         board.set<Callsign>("falcon");
 
-        EXPECT_EQ(board.get<Battery>(), 80);
-        EXPECT_EQ(board.get<Callsign>(), "falcon");
+        CHECK_EQ(board.get<Battery>(), 80);
+        CHECK_EQ(board.get<Callsign>(), "falcon");
     }
 
-    TEST(BlackboardTest, KeysOfTheSameValueTypeDoNotAlias)
+    TEST_CASE("BlackboardTest.KeysOfTheSameValueTypeDoNotAlias")
     {
         Board board;
 
         board.set<Battery>(80);
         board.set<Altitude>(120);
 
-        EXPECT_EQ(board.get<Battery>(), 80);
-        EXPECT_EQ(board.get<Altitude>(), 120);
+        CHECK_EQ(board.get<Battery>(), 80);
+        CHECK_EQ(board.get<Altitude>(), 120);
     }
 
-    TEST(BlackboardTest, GetReturnsAReferenceThatWritesThrough)
+    TEST_CASE("BlackboardTest.GetReturnsAReferenceThatWritesThrough")
     {
         Board board;
 
         board.get<Battery>() += 5;
         board.get<Callsign>().append("x");
 
-        EXPECT_EQ(board.get<Battery>(), 5);
-        EXPECT_EQ(board.get<Callsign>(), "x");
+        CHECK_EQ(board.get<Battery>(), 5);
+        CHECK_EQ(board.get<Callsign>(), "x");
     }
 
-    TEST(BlackboardTest, ConstBoardIsReadable)
+    TEST_CASE("BlackboardTest.ConstBoardIsReadable")
     {
         Board board;
         board.set<Altitude>(7);
         const Board &view = board;
 
-        EXPECT_EQ(view.get<Altitude>(), 7);
+        CHECK_EQ(view.get<Altitude>(), 7);
     }
 
-    TEST(BlackboardTest, KeyNotOnTheBoardIsRejectedAtCompileTime)
+    TEST_CASE("BlackboardTest.KeyNotOnTheBoardIsRejectedAtCompileTime")
     {
         static_assert(CanGet<Board, Battery>);
         static_assert(CanSet<Board, Battery>);
@@ -111,18 +111,18 @@ namespace blackboard_test
         }
     };
 
-    TEST(BlackboardTest, ServesAsTheTreeContext)
+    TEST_CASE("BlackboardTest.ServesAsTheTreeContext")
     {
         Board board;
         board.set<Battery>(100);
         auto tree = BatteryOk{} && DrainBattery{};
 
-        EXPECT_EQ(tree.process(Tick{}, board), bt::Status::Success);
-        EXPECT_EQ(tree.process(Tick{}, board), bt::Status::Success);
-        EXPECT_EQ(board.get<Battery>(), 40);
-        EXPECT_EQ(tree.process(Tick{}, board), bt::Status::Success);
-        EXPECT_EQ(tree.process(Tick{}, board), bt::Status::Failure);
-        EXPECT_EQ(board.get<Battery>(), 10);
+        CHECK_EQ(tree.process(Tick{}, board), bt::Status::Success);
+        CHECK_EQ(tree.process(Tick{}, board), bt::Status::Success);
+        CHECK_EQ(board.get<Battery>(), 40);
+        CHECK_EQ(tree.process(Tick{}, board), bt::Status::Success);
+        CHECK_EQ(tree.process(Tick{}, board), bt::Status::Failure);
+        CHECK_EQ(board.get<Battery>(), 10);
     }
 
 } // namespace blackboard_test

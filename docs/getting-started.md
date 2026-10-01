@@ -4,7 +4,7 @@
 
 - C++23, with deducing `this`: GCC 14+ or Clang 18+
 - CMake 3.22+
-- GTest, only for the tests
+- doctest, only for the tests (`apt install doctest-dev`)
 - ROS 2 Jazzy, only for the ROS examples
 
 ## Install

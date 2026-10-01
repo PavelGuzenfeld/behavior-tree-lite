@@ -1,5 +1,7 @@
 #include "behavior_tree_lite/behavior_tree.hpp"
-#include <gtest/gtest.h>
+#include <doctest/doctest.h>
+#include <string>
+#include <vector>
 
 using namespace bt;
 
@@ -79,7 +81,7 @@ namespace
         void reset() {}
     };
 
-    TEST(SequenceTest, AllChildrenSucceed)
+    TEST_CASE("SequenceTest.AllChildrenSucceed")
     {
         TestContext ctx;
         TestEvent evt;
@@ -89,14 +91,14 @@ namespace
 
         auto result = seq.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Success);
-        ASSERT_EQ(ctx.log.size(), 3u);
-        EXPECT_EQ(ctx.log[0], "a");
-        EXPECT_EQ(ctx.log[1], "b");
-        EXPECT_EQ(ctx.log[2], "c");
+        CHECK_EQ(result, Status::Success);
+        REQUIRE_EQ(ctx.log.size(), 3u);
+        CHECK_EQ(ctx.log[0], "a");
+        CHECK_EQ(ctx.log[1], "b");
+        CHECK_EQ(ctx.log[2], "c");
     }
 
-    TEST(SequenceTest, FirstChildFails)
+    TEST_CASE("SequenceTest.FirstChildFails")
     {
         TestContext ctx;
         TestEvent evt;
@@ -105,12 +107,12 @@ namespace
 
         auto result = seq.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Failure);
-        ASSERT_EQ(ctx.log.size(), 1u);
-        EXPECT_EQ(ctx.log[0], "fail");
+        CHECK_EQ(result, Status::Failure);
+        REQUIRE_EQ(ctx.log.size(), 1u);
+        CHECK_EQ(ctx.log[0], "fail");
     }
 
-    TEST(SequenceTest, MiddleChildFails)
+    TEST_CASE("SequenceTest.MiddleChildFails")
     {
         TestContext ctx;
         TestEvent evt;
@@ -120,13 +122,13 @@ namespace
 
         auto result = seq.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Failure);
-        ASSERT_EQ(ctx.log.size(), 2u);
-        EXPECT_EQ(ctx.log[0], "a");
-        EXPECT_EQ(ctx.log[1], "fail");
+        CHECK_EQ(result, Status::Failure);
+        REQUIRE_EQ(ctx.log.size(), 2u);
+        CHECK_EQ(ctx.log[0], "a");
+        CHECK_EQ(ctx.log[1], "fail");
     }
 
-    TEST(SequenceTest, RunningChildPausesExecution)
+    TEST_CASE("SequenceTest.RunningChildPausesExecution")
     {
         TestContext ctx;
         TestEvent evt;
@@ -135,18 +137,18 @@ namespace
             SuccessNode("a"), RunningNode(3, "running"), SuccessNode("b"));
 
         auto r1 = seq.process(evt, ctx);
-        EXPECT_EQ(r1, Status::Running);
+        CHECK_EQ(r1, Status::Running);
 
         auto r2 = seq.process(evt, ctx);
-        EXPECT_EQ(r2, Status::Running);
+        CHECK_EQ(r2, Status::Running);
 
         ctx.log.clear();
         auto r3 = seq.process(evt, ctx);
-        EXPECT_EQ(r3, Status::Success);
-        EXPECT_EQ(ctx.log.back(), "b");
+        CHECK_EQ(r3, Status::Success);
+        CHECK_EQ(ctx.log.back(), "b");
     }
 
-    TEST(SelectorTest, FirstChildSucceeds)
+    TEST_CASE("SelectorTest.FirstChildSucceeds")
     {
         TestContext ctx;
         TestEvent evt;
@@ -155,12 +157,12 @@ namespace
 
         auto result = sel.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Success);
-        ASSERT_EQ(ctx.log.size(), 1u);
-        EXPECT_EQ(ctx.log[0], "first");
+        CHECK_EQ(result, Status::Success);
+        REQUIRE_EQ(ctx.log.size(), 1u);
+        CHECK_EQ(ctx.log[0], "first");
     }
 
-    TEST(SelectorTest, FirstFailsSecondSucceeds)
+    TEST_CASE("SelectorTest.FirstFailsSecondSucceeds")
     {
         TestContext ctx;
         TestEvent evt;
@@ -169,13 +171,13 @@ namespace
 
         auto result = sel.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Success);
-        ASSERT_EQ(ctx.log.size(), 2u);
-        EXPECT_EQ(ctx.log[0], "fail");
-        EXPECT_EQ(ctx.log[1], "success");
+        CHECK_EQ(result, Status::Success);
+        REQUIRE_EQ(ctx.log.size(), 2u);
+        CHECK_EQ(ctx.log[0], "fail");
+        CHECK_EQ(ctx.log[1], "success");
     }
 
-    TEST(SelectorTest, AllChildrenFail)
+    TEST_CASE("SelectorTest.AllChildrenFail")
     {
         TestContext ctx;
         TestEvent evt;
@@ -185,11 +187,11 @@ namespace
 
         auto result = sel.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Failure);
-        EXPECT_EQ(ctx.log.size(), 3u);
+        CHECK_EQ(result, Status::Failure);
+        CHECK_EQ(ctx.log.size(), 3u);
     }
 
-    TEST(SelectorTest, RunningChildPausesExecution)
+    TEST_CASE("SelectorTest.RunningChildPausesExecution")
     {
         TestContext ctx;
         TestEvent evt;
@@ -198,14 +200,14 @@ namespace
             FailureNode("fail"), RunningNode(2, "running"), SuccessNode("skip"));
 
         auto r1 = sel.process(evt, ctx);
-        EXPECT_EQ(r1, Status::Running);
+        CHECK_EQ(r1, Status::Running);
 
         ctx.log.clear();
         auto r2 = sel.process(evt, ctx);
-        EXPECT_EQ(r2, Status::Success);
+        CHECK_EQ(r2, Status::Success);
     }
 
-    TEST(ParallelTest, AllChildrenSucceed)
+    TEST_CASE("ParallelTest.AllChildrenSucceed")
     {
         TestContext ctx;
         TestEvent evt;
@@ -214,11 +216,11 @@ namespace
 
         auto result = par.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Success);
-        EXPECT_EQ(ctx.log.size(), 2u);
+        CHECK_EQ(result, Status::Success);
+        CHECK_EQ(ctx.log.size(), 2u);
     }
 
-    TEST(ParallelTest, OneChildFails)
+    TEST_CASE("ParallelTest.OneChildFails")
     {
         TestContext ctx;
         TestEvent evt;
@@ -227,10 +229,10 @@ namespace
 
         auto result = par.process(evt, ctx);
 
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(ParallelTest, MixedRunningAndSuccess)
+    TEST_CASE("ParallelTest.MixedRunningAndSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -239,13 +241,13 @@ namespace
                                                                        SuccessNode("instant"));
 
         auto r1 = par.process(evt, ctx);
-        EXPECT_EQ(r1, Status::Running);
+        CHECK_EQ(r1, Status::Running);
 
         auto r2 = par.process(evt, ctx);
-        EXPECT_EQ(r2, Status::Success);
+        CHECK_EQ(r2, Status::Success);
     }
 
-    TEST(ParallelTest, AllChildrenRunTogether)
+    TEST_CASE("ParallelTest.AllChildrenRunTogether")
     {
         int counter1 = 0, counter2 = 0;
         TestContext ctx;
@@ -255,11 +257,11 @@ namespace
 
         par.process(evt, ctx);
 
-        EXPECT_EQ(counter1, 1);
-        EXPECT_EQ(counter2, 1);
+        CHECK_EQ(counter1, 1);
+        CHECK_EQ(counter2, 1);
     }
 
-    TEST(SequenceTest, SingleChildSuccess)
+    TEST_CASE("SequenceTest.SingleChildSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -267,11 +269,11 @@ namespace
         Sequence<TestEvent, TestContext, SuccessNode> seq(SuccessNode("only"));
 
         auto result = seq.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
-        EXPECT_EQ(ctx.log.size(), 1u);
+        CHECK_EQ(result, Status::Success);
+        CHECK_EQ(ctx.log.size(), 1u);
     }
 
-    TEST(SequenceTest, SingleChildFailure)
+    TEST_CASE("SequenceTest.SingleChildFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -279,10 +281,10 @@ namespace
         Sequence<TestEvent, TestContext, FailureNode> seq(FailureNode("only"));
 
         auto result = seq.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(SelectorTest, SingleChildSuccess)
+    TEST_CASE("SelectorTest.SingleChildSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -290,10 +292,10 @@ namespace
         Selector<TestEvent, TestContext, SuccessNode> sel(SuccessNode("only"));
 
         auto result = sel.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
+        CHECK_EQ(result, Status::Success);
     }
 
-    TEST(SelectorTest, SingleChildFailure)
+    TEST_CASE("SelectorTest.SingleChildFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -301,10 +303,10 @@ namespace
         Selector<TestEvent, TestContext, FailureNode> sel(FailureNode("only"));
 
         auto result = sel.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(ParallelTest, SingleChildSuccess)
+    TEST_CASE("ParallelTest.SingleChildSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -312,10 +314,10 @@ namespace
         Parallel<TestEvent, TestContext, SuccessNode> par(SuccessNode("only"));
 
         auto result = par.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
+        CHECK_EQ(result, Status::Success);
     }
 
-    TEST(ParallelTest, SingleChildFailure)
+    TEST_CASE("ParallelTest.SingleChildFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -323,10 +325,10 @@ namespace
         Parallel<TestEvent, TestContext, FailureNode> par(FailureNode("only"));
 
         auto result = par.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(CompositeTest, DeeplyNestedSequenceInSelector)
+    TEST_CASE("CompositeTest.DeeplyNestedSequenceInSelector")
     {
         TestContext ctx;
         TestEvent evt;
@@ -337,14 +339,14 @@ namespace
                  Sequence<TestEvent, TestContext, SuccessNode, SuccessNode>(SuccessNode("a"), SuccessNode("b")));
 
         auto result = root.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
-        ASSERT_EQ(ctx.log.size(), 3u);
-        EXPECT_EQ(ctx.log[0], "f");
-        EXPECT_EQ(ctx.log[1], "a");
-        EXPECT_EQ(ctx.log[2], "b");
+        CHECK_EQ(result, Status::Success);
+        REQUIRE_EQ(ctx.log.size(), 3u);
+        CHECK_EQ(ctx.log[0], "f");
+        CHECK_EQ(ctx.log[1], "a");
+        CHECK_EQ(ctx.log[2], "b");
     }
 
-    TEST(CompositeTest, ThreeLevelNesting)
+    TEST_CASE("CompositeTest.ThreeLevelNesting")
     {
         TestContext ctx;
         TestEvent evt;
@@ -354,14 +356,14 @@ namespace
             SuccessNode("outer"));
 
         auto result = root.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
-        ASSERT_EQ(ctx.log.size(), 3u);
-        EXPECT_EQ(ctx.log[0], "f");
-        EXPECT_EQ(ctx.log[1], "inner");
-        EXPECT_EQ(ctx.log[2], "outer");
+        CHECK_EQ(result, Status::Success);
+        REQUIRE_EQ(ctx.log.size(), 3u);
+        CHECK_EQ(ctx.log[0], "f");
+        CHECK_EQ(ctx.log[1], "inner");
+        CHECK_EQ(ctx.log[2], "outer");
     }
 
-    TEST(CompositeTest, SequenceReset)
+    TEST_CASE("CompositeTest.SequenceReset")
     {
         TestContext ctx;
         TestEvent evt;
@@ -369,13 +371,13 @@ namespace
         Sequence<TestEvent, TestContext, RunningNode, SuccessNode> seq(RunningNode(3, "running"), SuccessNode("b"));
 
         seq.process(evt, ctx);
-        EXPECT_EQ(seq.current_index, 0u);
+        CHECK_EQ(seq.current_index, 0u);
 
         seq.reset();
-        EXPECT_EQ(seq.current_index, 0u);
+        CHECK_EQ(seq.current_index, 0u);
     }
 
-    TEST(CompositeTest, ParallelReset)
+    TEST_CASE("CompositeTest.ParallelReset")
     {
         TestContext ctx;
         TestEvent evt;
@@ -387,7 +389,7 @@ namespace
         par.reset();
         for (bool f : par.finished)
         {
-            EXPECT_FALSE(f);
+            CHECK_FALSE(f);
         }
     }
 

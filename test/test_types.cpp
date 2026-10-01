@@ -1,26 +1,28 @@
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "behavior_tree_lite/types.hpp"
-#include "gtest/gtest.h"
+#include <doctest/doctest.h>
+#include <string>
 
 using namespace bt;
 
 namespace
 {
 
-    TEST(TypesTest, StatusToString)
+    TEST_CASE("TypesTest.StatusToString")
     {
-        EXPECT_EQ(to_string(Status::Success), "Success");
-        EXPECT_EQ(to_string(Status::Failure), "Failure");
-        EXPECT_EQ(to_string(Status::Running), "Running");
+        CHECK_EQ(to_string(Status::Success), "Success");
+        CHECK_EQ(to_string(Status::Failure), "Failure");
+        CHECK_EQ(to_string(Status::Running), "Running");
     }
 
-    TEST(TypesTest, StatusEnum)
+    TEST_CASE("TypesTest.StatusEnum")
     {
         Status s = Status::Success;
-        EXPECT_NE(s, Status::Failure);
-        EXPECT_NE(s, Status::Running);
+        CHECK_NE(s, Status::Failure);
+        CHECK_NE(s, Status::Running);
     }
 
-    TEST(TypesTest, OverloadedVisitor)
+    TEST_CASE("TypesTest.OverloadedVisitor")
     {
         std::variant<int, double, std::string> v = 42;
 
@@ -32,7 +34,7 @@ namespace
                                             }},
                                  v);
 
-        EXPECT_EQ(result, "int: 42");
+        CHECK_EQ(result, "int: 42");
     }
 
     struct MockEvent
@@ -58,7 +60,7 @@ namespace
         Status process(const MockEvent &, MockContext &) { return Status::Success; }
     };
 
-    TEST(TypesTest, IsNodeConcept)
+    TEST_CASE("TypesTest.IsNodeConcept")
     {
         static_assert(IsNode<ValidNode, MockEvent, MockContext>);
         static_assert(!IsNode<InvalidNodeNoProcess, MockEvent, MockContext>);
@@ -67,13 +69,13 @@ namespace
         static_assert(HasReset<ValidNode>);
     }
 
-    TEST(TypesTest, NodeBaseMovable)
+    TEST_CASE("TypesTest.NodeBaseMovable")
     {
         static_assert(std::is_move_constructible_v<NodeBase>);
         static_assert(std::is_move_assignable_v<NodeBase>);
     }
 
-    TEST(TypesTest, NodeBaseNotCopyable)
+    TEST_CASE("TypesTest.NodeBaseNotCopyable")
     {
         static_assert(!std::is_copy_constructible_v<NodeBase>);
         static_assert(!std::is_copy_assignable_v<NodeBase>);

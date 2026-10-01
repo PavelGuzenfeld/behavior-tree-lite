@@ -1,5 +1,5 @@
 #include "behavior_tree_lite/behavior_tree.hpp"
-#include <gtest/gtest.h>
+#include <doctest/doctest.h>
 
 using namespace bt;
 
@@ -73,7 +73,7 @@ namespace
         void reset() { current = 0; }
     };
 
-    TEST(InverterTest, InvertsSuccess)
+    TEST_CASE("InverterTest.InvertsSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -81,10 +81,10 @@ namespace
         Inverter<TestEvent, TestContext, SuccessNode> inv(SuccessNode{});
 
         auto result = inv.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(InverterTest, InvertsFailure)
+    TEST_CASE("InverterTest.InvertsFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -92,10 +92,10 @@ namespace
         Inverter<TestEvent, TestContext, FailureNode> inv(FailureNode{});
 
         auto result = inv.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
+        CHECK_EQ(result, Status::Success);
     }
 
-    TEST(InverterTest, PassesThroughRunning)
+    TEST_CASE("InverterTest.PassesThroughRunning")
     {
         TestContext ctx;
         TestEvent evt;
@@ -103,10 +103,10 @@ namespace
         Inverter<TestEvent, TestContext, RunningNode> inv(RunningNode{});
 
         auto result = inv.process(evt, ctx);
-        EXPECT_EQ(result, Status::Running);
+        CHECK_EQ(result, Status::Running);
     }
 
-    TEST(RetryTest, SucceedsImmediately)
+    TEST_CASE("RetryTest.SucceedsImmediately")
     {
         TestContext ctx;
         TestEvent evt;
@@ -114,11 +114,11 @@ namespace
         Retry<TestEvent, TestContext, SuccessNode> retry(3, SuccessNode{});
 
         auto result = retry.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
-        EXPECT_EQ(retry.attempts, 0);
+        CHECK_EQ(result, Status::Success);
+        CHECK_EQ(retry.attempts, 0);
     }
 
-    TEST(RetryTest, RetriesOnFailure)
+    TEST_CASE("RetryTest.RetriesOnFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -126,19 +126,19 @@ namespace
         Retry<TestEvent, TestContext, FailureNode> retry(3, FailureNode{});
 
         auto r1 = retry.process(evt, ctx);
-        EXPECT_EQ(r1, Status::Running);
-        EXPECT_EQ(retry.attempts, 1);
+        CHECK_EQ(r1, Status::Running);
+        CHECK_EQ(retry.attempts, 1);
 
         auto r2 = retry.process(evt, ctx);
-        EXPECT_EQ(r2, Status::Running);
-        EXPECT_EQ(retry.attempts, 2);
+        CHECK_EQ(r2, Status::Running);
+        CHECK_EQ(retry.attempts, 2);
 
         auto r3 = retry.process(evt, ctx);
-        EXPECT_EQ(r3, Status::Failure);
-        EXPECT_EQ(retry.attempts, 0);
+        CHECK_EQ(r3, Status::Failure);
+        CHECK_EQ(retry.attempts, 0);
     }
 
-    TEST(RetryTest, GivesFullAttemptBudgetAgainAfterGivingUp)
+    TEST_CASE("RetryTest.GivesFullAttemptBudgetAgainAfterGivingUp")
     {
         TestContext ctx;
         TestEvent evt;
@@ -147,13 +147,13 @@ namespace
 
         for (int run = 0; run < 2; ++run)
         {
-            EXPECT_EQ(retry.process(evt, ctx), Status::Running);
-            EXPECT_EQ(retry.process(evt, ctx), Status::Running);
-            EXPECT_EQ(retry.process(evt, ctx), Status::Failure);
+            CHECK_EQ(retry.process(evt, ctx), Status::Running);
+            CHECK_EQ(retry.process(evt, ctx), Status::Running);
+            CHECK_EQ(retry.process(evt, ctx), Status::Failure);
         }
     }
 
-    TEST(RetryTest, ResetClearsAttempts)
+    TEST_CASE("RetryTest.ResetClearsAttempts")
     {
         TestContext ctx;
         TestEvent evt;
@@ -161,13 +161,13 @@ namespace
         Retry<TestEvent, TestContext, FailureNode> retry(3, FailureNode{});
 
         retry.process(evt, ctx);
-        EXPECT_EQ(retry.attempts, 1);
+        CHECK_EQ(retry.attempts, 1);
 
         retry.reset();
-        EXPECT_EQ(retry.attempts, 0);
+        CHECK_EQ(retry.attempts, 0);
     }
 
-    TEST(RepeatTest, RepeatsNTimes)
+    TEST_CASE("RepeatTest.RepeatsNTimes")
     {
         TestContext ctx;
         TestEvent evt;
@@ -176,19 +176,19 @@ namespace
         Repeat<TestEvent, TestContext, CountingNode> repeat(3, CountingNode(&counter, 1));
 
         auto r1 = repeat.process(evt, ctx);
-        EXPECT_EQ(r1, Status::Running);
-        EXPECT_EQ(counter, 1);
+        CHECK_EQ(r1, Status::Running);
+        CHECK_EQ(counter, 1);
 
         auto r2 = repeat.process(evt, ctx);
-        EXPECT_EQ(r2, Status::Running);
-        EXPECT_EQ(counter, 2);
+        CHECK_EQ(r2, Status::Running);
+        CHECK_EQ(counter, 2);
 
         auto r3 = repeat.process(evt, ctx);
-        EXPECT_EQ(r3, Status::Success);
-        EXPECT_EQ(counter, 3);
+        CHECK_EQ(r3, Status::Success);
+        CHECK_EQ(counter, 3);
     }
 
-    TEST(RepeatTest, FailsIfChildFails)
+    TEST_CASE("RepeatTest.FailsIfChildFails")
     {
         TestContext ctx;
         TestEvent evt;
@@ -196,10 +196,10 @@ namespace
         Repeat<TestEvent, TestContext, FailureNode> repeat(5, FailureNode{});
 
         auto result = repeat.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(RepeatTest, InfiniteRepeat)
+    TEST_CASE("RepeatTest.InfiniteRepeat")
     {
         TestContext ctx;
         TestEvent evt;
@@ -210,12 +210,12 @@ namespace
         for (int i = 0; i < 100; ++i)
         {
             auto result = repeat.process(evt, ctx);
-            EXPECT_EQ(result, Status::Running);
+            CHECK_EQ(result, Status::Running);
         }
-        EXPECT_EQ(counter, 100);
+        CHECK_EQ(counter, 100);
     }
 
-    TEST(SucceederTest, ConvertsFailureToSuccess)
+    TEST_CASE("SucceederTest.ConvertsFailureToSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -223,10 +223,10 @@ namespace
         Succeeder<TestEvent, TestContext, FailureNode> succ(FailureNode{});
 
         auto result = succ.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
+        CHECK_EQ(result, Status::Success);
     }
 
-    TEST(SucceederTest, PassesThroughRunning)
+    TEST_CASE("SucceederTest.PassesThroughRunning")
     {
         TestContext ctx;
         TestEvent evt;
@@ -234,10 +234,10 @@ namespace
         Succeeder<TestEvent, TestContext, RunningNode> succ(RunningNode{});
 
         auto result = succ.process(evt, ctx);
-        EXPECT_EQ(result, Status::Running);
+        CHECK_EQ(result, Status::Running);
     }
 
-    TEST(FailerTest, ConvertsSuccessToFailure)
+    TEST_CASE("FailerTest.ConvertsSuccessToFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -245,10 +245,10 @@ namespace
         Failer<TestEvent, TestContext, SuccessNode> failer(SuccessNode{});
 
         auto result = failer.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(FailerTest, PassesThroughRunning)
+    TEST_CASE("FailerTest.PassesThroughRunning")
     {
         TestContext ctx;
         TestEvent evt;
@@ -256,10 +256,10 @@ namespace
         Failer<TestEvent, TestContext, RunningNode> failer(RunningNode{});
 
         auto result = failer.process(evt, ctx);
-        EXPECT_EQ(result, Status::Running);
+        CHECK_EQ(result, Status::Running);
     }
 
-    TEST(TimeoutTest, SucceedsWithinTimeout)
+    TEST_CASE("TimeoutTest.SucceedsWithinTimeout")
     {
         TestContext ctx;
         TestEvent evt;
@@ -268,13 +268,13 @@ namespace
         Timeout<TestEvent, TestContext, CountingNode> timeout(5, CountingNode(&counter, 2));
 
         auto r1 = timeout.process(evt, ctx);
-        EXPECT_EQ(r1, Status::Running);
+        CHECK_EQ(r1, Status::Running);
 
         auto r2 = timeout.process(evt, ctx);
-        EXPECT_EQ(r2, Status::Success);
+        CHECK_EQ(r2, Status::Success);
     }
 
-    TEST(TimeoutTest, FailsOnTimeout)
+    TEST_CASE("TimeoutTest.FailsOnTimeout")
     {
         TestContext ctx;
         TestEvent evt;
@@ -286,10 +286,10 @@ namespace
         timeout.process(evt, ctx);
 
         auto result = timeout.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(TimeoutTest, ResetClearsTicks)
+    TEST_CASE("TimeoutTest.ResetClearsTicks")
     {
         TestContext ctx;
         TestEvent evt;
@@ -298,13 +298,13 @@ namespace
 
         timeout.process(evt, ctx);
         timeout.process(evt, ctx);
-        EXPECT_EQ(timeout.ticks, 2);
+        CHECK_EQ(timeout.ticks, 2);
 
         timeout.reset();
-        EXPECT_EQ(timeout.ticks, 0);
+        CHECK_EQ(timeout.ticks, 0);
     }
 
-    TEST(GuardTest, ProcessesChildWhenPredicateTrue)
+    TEST_CASE("GuardTest.ProcessesChildWhenPredicateTrue")
     {
         TestContext ctx;
         TestEvent evt;
@@ -316,10 +316,10 @@ namespace
         Guard<TestEvent, TestContext, decltype(always_true), SuccessNode> guard(always_true, SuccessNode{});
 
         auto result = guard.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
+        CHECK_EQ(result, Status::Success);
     }
 
-    TEST(GuardTest, ReturnsFailureWhenPredicateFalse)
+    TEST_CASE("GuardTest.ReturnsFailureWhenPredicateFalse")
     {
         TestContext ctx;
         TestEvent evt;
@@ -331,10 +331,10 @@ namespace
         Guard<TestEvent, TestContext, decltype(always_false), SuccessNode> guard(always_false, SuccessNode{});
 
         auto result = guard.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(GuardTest, ChildNotProcessedWhenPredicateFalse)
+    TEST_CASE("GuardTest.ChildNotProcessedWhenPredicateFalse")
     {
         TestContext ctx;
         TestEvent evt;
@@ -347,10 +347,10 @@ namespace
         Guard<TestEvent, TestContext, decltype(pred), CountingNode> guard(pred, CountingNode(&counter, 1));
 
         guard.process(evt, ctx);
-        EXPECT_EQ(counter, 0);
+        CHECK_EQ(counter, 0);
     }
 
-    TEST(GuardTest, PredicateReadsContext)
+    TEST_CASE("GuardTest.PredicateReadsContext")
     {
         struct ContextWithFlag
         {
@@ -366,13 +366,13 @@ namespace
         };
         Guard<TestEvent, TestContext, decltype(pred), SuccessNode> guard(pred, SuccessNode{});
 
-        EXPECT_EQ(guard.process(evt, ctx), Status::Success);
+        CHECK_EQ(guard.process(evt, ctx), Status::Success);
 
         flag = false;
-        EXPECT_EQ(guard.process(evt, ctx), Status::Failure);
+        CHECK_EQ(guard.process(evt, ctx), Status::Failure);
     }
 
-    TEST(GuardTest, PassesThroughChildRunning)
+    TEST_CASE("GuardTest.PassesThroughChildRunning")
     {
         TestContext ctx;
         TestEvent evt;
@@ -384,10 +384,10 @@ namespace
         Guard<TestEvent, TestContext, decltype(always_true), RunningNode> guard(always_true, RunningNode{});
 
         auto result = guard.process(evt, ctx);
-        EXPECT_EQ(result, Status::Running);
+        CHECK_EQ(result, Status::Running);
     }
 
-    TEST(GuardTest, ResetResetsChild)
+    TEST_CASE("GuardTest.ResetResetsChild")
     {
         TestContext ctx;
         TestEvent evt;
@@ -401,22 +401,22 @@ namespace
 
         guard.process(evt, ctx);
         guard.process(evt, ctx);
-        EXPECT_EQ(counter, 2);
+        CHECK_EQ(counter, 2);
 
         guard.reset();
 
         auto result = guard.process(evt, ctx);
-        EXPECT_EQ(result, Status::Running);
+        CHECK_EQ(result, Status::Running);
     }
 
-    TEST(GuardTest, MakeGuardFactory)
+    TEST_CASE("GuardTest.MakeGuardFactory")
     {
         TestContext ctx;
         TestEvent evt;
 
         auto guard = make_guard<TestEvent, TestContext>([](const TestContext &) { return true; }, SuccessNode{});
 
-        EXPECT_EQ(guard.process(evt, ctx), Status::Success);
+        CHECK_EQ(guard.process(evt, ctx), Status::Success);
     }
 
 } // namespace
