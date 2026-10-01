@@ -20,6 +20,14 @@ cmake -B build -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON
 cmake --build build && ctest --test-dir build --output-on-failure
 ```
 
+A `Dockerfile` has the CI toolchain (GCC 14, Clang 18, clang-format and clang-tidy 18, doctest, ROS 2 Jazzy):
+
+```bash
+docker build -t behavior-tree-lite-dev .
+docker run --rm -v "$PWD":/repo:ro behavior-tree-lite-dev bash -c \
+  'cmake -B /tmp/b -G Ninja && cmake --build /tmp/b && ctest --test-dir /tmp/b'
+```
+
 Needs GCC 14+ or Clang 18+. ROS 2 Jazzy is optional, for the examples.
 Planned work is in [issues](https://github.com/PavelGuzenfeld/behavior-tree-lite/issues).
 
