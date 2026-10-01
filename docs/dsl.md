@@ -42,9 +42,10 @@ struct MyNode : NodeBase {
 };
 ```
 
-### Deduced from `process()`
+### Deduced from `process()` or `operator()`
 
-A plain node with a non-template `process(const E&, C&)` works without the
+A plain node with a non-template `process(const E&, C&)` or
+`operator()(const E&, C&)` works without the
 typedefs:
 
 ```cpp
@@ -55,7 +56,7 @@ struct SimpleNode {
 auto tree = SimpleNode{} && OtherNode{};
 ```
 
-This does not work when `process` is a template or uses deducing `this`
+This does not work when the function is a template or uses deducing `this`
 (`this auto&&`). Use the typedefs there.
 
 ### Library nodes

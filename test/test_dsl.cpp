@@ -135,4 +135,61 @@ namespace
         retry.reset();
     }
 
+    struct CallableWithTypedefs
+    {
+        using EventType = Event;
+        using ContextType = Context;
+        Status operator()(const Event &, Context &) { return Status::Failure; }
+    };
+
+    struct CallableDeduced
+    {
+        Status operator()(const Event &, Context &) const { return Status::Success; }
+    };
+
+    TEST(CallableNodeTest, OperatorCallIsANode)
+    {
+        static_assert(IsNode<CallableWithTypedefs, Event, Context>);
+        static_assert(IsNode<CallableDeduced, Event, Context>);
+    }
+
+    TEST(CallableNodeTest, CallableNodesComposeAndRunUnderEveryParent)
+    {
+        Context ctx;
+        auto seq = CallableDeduced{} && CallableWithTypedefs{};
+        auto sel = CallableWithTypedefs{} || CallableDeduced{};
+        auto inv = !CallableWithTypedefs{};
+        auto retry = make_retry<Event, Context>(2, CallableWithTypedefs{});
+
+        EXPECT_EQ(seq.process(Event{}, ctx), Status::Failure);
+        EXPECT_EQ(sel.process(Event{}, ctx), Status::Success);
+        EXPECT_EQ(inv.process(Event{}, ctx), Status::Success);
+        EXPECT_EQ(retry.process(Event{}, ctx), Status::Running);
+    }
+
+    TEST(CallableNodeTest, LibraryNodesAreCallableToo)
+    {
+        Context ctx;
+        auto seq = NodeA{} && NodeB{};
+        auto inv = !NodeA{};
+
+        EXPECT_EQ(seq(Event{}, ctx), Status::Failure);
+        EXPECT_EQ(inv(Event{}, ctx), Status::Failure);
+        EXPECT_EQ(NodeA{}(Event{}, ctx), Status::Success);
+    }
+
+    TEST(CallableNodeTest, ProcessWinsWhenBothExist)
+    {
+        struct Both : NodeBase
+        {
+            using EventType = Event;
+            using ContextType = Context;
+            Status process(const Event &, Context &) { return Status::Success; }
+            Status operator()(const Event &, Context &) { return Status::Failure; }
+        };
+        Context ctx;
+        auto seq = Both{} && NodeA{};
+        EXPECT_EQ(seq.process(Event{}, ctx), Status::Success);
+    }
+
 } // namespace

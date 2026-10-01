@@ -1,8 +1,13 @@
 # Nodes
 
-Every node has a `process(const Event&, Context&)` that returns
-`Status::Success`, `Status::Failure` or `Status::Running`. That is all the
-`IsNode<T, Event, Context>` concept asks for.
+A node is anything the tree can call with an event and a context and get a
+`Status` back: `Success`, `Failure` or `Running`. Write it as
+`process(const Event&, Context&)` or as `operator()(const Event&, Context&)`.
+That is all the `IsNode<T, Event, Context>` concept asks for. If a node has
+both, `process` is used.
+
+Library nodes derive from `NodeBase`, which forwards `operator()` to
+`process`, so `tree(event, ctx)` works as well as `tree.process(event, ctx)`.
 
 A node may also have `void reset()`, which puts it back to its first-tick
 state. Parents call it after a child finishes or when they are reset

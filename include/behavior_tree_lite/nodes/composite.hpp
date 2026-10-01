@@ -28,7 +28,7 @@ namespace bt
                 ((Is >= self.current_index && result == Status::Success ? [&]
                       {
                 auto& child = std::get<Is>(self.children);
-                Status s = child.process(evt, ctx);
+                Status s = call_node<Event, Context>(child, evt, ctx);
 
                 if (s == Status::Running) {
                     self.current_index = Is;
@@ -74,7 +74,7 @@ namespace bt
                 ((Is >= self.current_index && result == Status::Failure ? [&]
                       {
                 auto& child = std::get<Is>(self.children);
-                Status s = child.process(evt, ctx);
+                Status s = call_node<Event, Context>(child, evt, ctx);
 
                 if (s == Status::Running) {
                     self.current_index = Is;
@@ -128,7 +128,7 @@ namespace bt
                          }
 
                          auto &child = std::get<Is>(self.children);
-                         switch (child.process(evt, ctx))
+                         switch (call_node<Event, Context>(child, evt, ctx))
                          {
                          case Status::Success:
                              self.finished[Is] = true;
