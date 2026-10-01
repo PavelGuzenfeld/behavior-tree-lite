@@ -12,7 +12,7 @@ namespace bt
     {
         int major = 0;
         int minor = 3;
-        int patch = 0;
+        int patch = 1;
     } version;
 
     template <typename Event, typename Context, typename Pred, IsNode<Event, Context> Child>
