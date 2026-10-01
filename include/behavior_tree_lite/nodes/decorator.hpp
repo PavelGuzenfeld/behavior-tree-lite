@@ -51,7 +51,7 @@ namespace bt
                 self.child.reset();
                 return Status::Running;
             }
-            if (s == Status::Success)
+            if (s != Status::Running)
                 self.attempts = 0;
             return s;
         }

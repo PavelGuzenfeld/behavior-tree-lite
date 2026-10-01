@@ -135,7 +135,22 @@ namespace
 
         auto r3 = retry.process(evt, ctx);
         EXPECT_EQ(r3, Status::Failure);
-        EXPECT_EQ(retry.attempts, 3);
+        EXPECT_EQ(retry.attempts, 0);
+    }
+
+    TEST(RetryTest, GivesFullAttemptBudgetAgainAfterGivingUp)
+    {
+        TestContext ctx;
+        TestEvent evt;
+
+        Retry<TestEvent, TestContext, FailureNode> retry(3, FailureNode{});
+
+        for (int run = 0; run < 2; ++run)
+        {
+            EXPECT_EQ(retry.process(evt, ctx), Status::Running);
+            EXPECT_EQ(retry.process(evt, ctx), Status::Running);
+            EXPECT_EQ(retry.process(evt, ctx), Status::Failure);
+        }
     }
 
     TEST(RetryTest, ResetClearsAttempts)
