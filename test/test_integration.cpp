@@ -1,5 +1,5 @@
 #include "behavior_tree_lite/behavior_tree.hpp"
-#include <gtest/gtest.h>
+#include <doctest/doctest.h>
 #include <variant>
 
 using namespace bt;
@@ -97,34 +97,34 @@ namespace
         void reset() {}
     };
 
-    TEST(IntegrationTest, VariantEventDispatch)
+    TEST_CASE("IntegrationTest.VariantEventDispatch")
     {
         RobotContext ctx;
         ctx.battery = 50;
 
         CheckBattery check(20);
 
-        EXPECT_EQ(check.process(TickEvent{}, ctx), Status::Success);
-        EXPECT_EQ(check.process(BatteryEvent{10}, ctx), Status::Failure);
-        EXPECT_EQ(ctx.battery, 10);
-        EXPECT_EQ(check.process(BatteryEvent{100}, ctx), Status::Success);
-        EXPECT_EQ(ctx.battery, 100);
+        CHECK_EQ(check.process(TickEvent{}, ctx), Status::Success);
+        CHECK_EQ(check.process(BatteryEvent{10}, ctx), Status::Failure);
+        CHECK_EQ(ctx.battery, 10);
+        CHECK_EQ(check.process(BatteryEvent{100}, ctx), Status::Success);
+        CHECK_EQ(ctx.battery, 100);
     }
 
-    TEST(IntegrationTest, ScanWaitsForEnemy)
+    TEST_CASE("IntegrationTest.ScanWaitsForEnemy")
     {
         RobotContext ctx;
         ScanForObject scan;
 
-        EXPECT_EQ(scan.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_EQ(scan.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_EQ(ctx.objects_detected, 0);
+        CHECK_EQ(scan.process(TickEvent{}, ctx), Status::Running);
+        CHECK_EQ(scan.process(TickEvent{}, ctx), Status::Running);
+        CHECK_EQ(ctx.objects_detected, 0);
 
-        EXPECT_EQ(scan.process(ObjectEvent{100, 1}, ctx), Status::Success);
-        EXPECT_EQ(ctx.objects_detected, 1);
+        CHECK_EQ(scan.process(ObjectEvent{100, 1}, ctx), Status::Success);
+        CHECK_EQ(ctx.objects_detected, 1);
     }
 
-    TEST(IntegrationTest, InspectionSequence)
+    TEST_CASE("IntegrationTest.InspectionSequence")
     {
         RobotContext ctx;
         ctx.battery = 100;
@@ -132,23 +132,23 @@ namespace
         Sequence<Event, RobotContext, CheckBattery, ScanForObject, TakeSample> inspection(
             CheckBattery(20), ScanForObject{}, TakeSample(3));
 
-        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
+        CHECK_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
 
-        EXPECT_EQ(inspection.process(ObjectEvent{50, 1}, ctx), Status::Running);
-        EXPECT_EQ(ctx.objects_detected, 1);
-        EXPECT_EQ(ctx.samples_taken, 0);
+        CHECK_EQ(inspection.process(ObjectEvent{50, 1}, ctx), Status::Running);
+        CHECK_EQ(ctx.objects_detected, 1);
+        CHECK_EQ(ctx.samples_taken, 0);
 
-        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_EQ(ctx.samples_taken, 1);
+        CHECK_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
+        CHECK_EQ(ctx.samples_taken, 1);
 
-        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_EQ(ctx.samples_taken, 2);
+        CHECK_EQ(inspection.process(TickEvent{}, ctx), Status::Running);
+        CHECK_EQ(ctx.samples_taken, 2);
 
-        EXPECT_EQ(inspection.process(TickEvent{}, ctx), Status::Success);
-        EXPECT_EQ(ctx.samples_taken, 3);
+        CHECK_EQ(inspection.process(TickEvent{}, ctx), Status::Success);
+        CHECK_EQ(ctx.samples_taken, 3);
     }
 
-    TEST(IntegrationTest, FallbackOnLowBattery)
+    TEST_CASE("IntegrationTest.FallbackOnLowBattery")
     {
         RobotContext ctx;
         ctx.battery = 10;
@@ -158,11 +158,11 @@ namespace
             ActivateAlarm{});
 
         auto result = root.process(TickEvent{}, ctx);
-        EXPECT_EQ(result, Status::Success);
-        EXPECT_TRUE(ctx.alarm_active);
+        CHECK_EQ(result, Status::Success);
+        CHECK(ctx.alarm_active);
     }
 
-    TEST(IntegrationTest, RetryOnScanFailure)
+    TEST_CASE("IntegrationTest.RetryOnScanFailure")
     {
         struct FlakyScan : NodeBase
         {
@@ -184,14 +184,14 @@ namespace
         RobotContext ctx;
         Retry<Event, RobotContext, FlakyScan> retry_scan(5, FlakyScan(2));
 
-        EXPECT_EQ(retry_scan.process(TickEvent{}, ctx), Status::Running);
+        CHECK_EQ(retry_scan.process(TickEvent{}, ctx), Status::Running);
 
-        EXPECT_EQ(retry_scan.process(TickEvent{}, ctx), Status::Running);
+        CHECK_EQ(retry_scan.process(TickEvent{}, ctx), Status::Running);
 
-        EXPECT_EQ(retry_scan.process(TickEvent{}, ctx), Status::Success);
+        CHECK_EQ(retry_scan.process(TickEvent{}, ctx), Status::Success);
     }
 
-    TEST(IntegrationTest, ParallelInspection)
+    TEST_CASE("IntegrationTest.ParallelInspection")
     {
         struct MoveToStation : NodeBase
         {
@@ -210,15 +210,15 @@ namespace
 
         Parallel<Event, RobotContext, MoveToStation, TakeSample> maneuver(MoveToStation(&moved), TakeSample(2));
 
-        EXPECT_EQ(maneuver.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_TRUE(moved);
-        EXPECT_EQ(ctx.samples_taken, 1);
+        CHECK_EQ(maneuver.process(TickEvent{}, ctx), Status::Running);
+        CHECK(moved);
+        CHECK_EQ(ctx.samples_taken, 1);
 
-        EXPECT_EQ(maneuver.process(TickEvent{}, ctx), Status::Success);
-        EXPECT_EQ(ctx.samples_taken, 2);
+        CHECK_EQ(maneuver.process(TickEvent{}, ctx), Status::Success);
+        CHECK_EQ(ctx.samples_taken, 2);
     }
 
-    TEST(IntegrationTest, ComplexNestedTree)
+    TEST_CASE("IntegrationTest.ComplexNestedTree")
     {
         RobotContext ctx;
         ctx.battery = 100;
@@ -236,27 +236,27 @@ namespace
                          ScanForObject{}, Inverter<Event, RobotContext, AlwaysFail>(AlwaysFail{}))),
                  ActivateAlarm{});
 
-        EXPECT_EQ(root.process(TickEvent{}, ctx), Status::Running);
-        EXPECT_FALSE(ctx.alarm_active);
+        CHECK_EQ(root.process(TickEvent{}, ctx), Status::Running);
+        CHECK_FALSE(ctx.alarm_active);
 
-        EXPECT_EQ(root.process(ObjectEvent{100, 1}, ctx), Status::Success);
-        EXPECT_FALSE(ctx.alarm_active);
+        CHECK_EQ(root.process(ObjectEvent{100, 1}, ctx), Status::Success);
+        CHECK_FALSE(ctx.alarm_active);
     }
 
-    TEST(IntegrationTest, TreeReset)
+    TEST_CASE("IntegrationTest.TreeReset")
     {
         RobotContext ctx;
 
         TakeSample sampler(3);
         sampler.process(TickEvent{}, ctx);
         sampler.process(TickEvent{}, ctx);
-        EXPECT_EQ(sampler.samples, 2);
+        CHECK_EQ(sampler.samples, 2);
 
         sampler.reset();
-        EXPECT_EQ(sampler.samples, 0);
+        CHECK_EQ(sampler.samples, 0);
     }
 
-    TEST(FactoryTest, MakeSequence)
+    TEST_CASE("FactoryTest.MakeSequence")
     {
         RobotContext ctx;
         ctx.battery = 100;
@@ -264,11 +264,11 @@ namespace
         auto seq = make_sequence<Event, RobotContext>(CheckBattery(20), ActivateAlarm{});
 
         auto result = seq.process(TickEvent{}, ctx);
-        EXPECT_EQ(result, Status::Success);
-        EXPECT_TRUE(ctx.alarm_active);
+        CHECK_EQ(result, Status::Success);
+        CHECK(ctx.alarm_active);
     }
 
-    TEST(FactoryTest, MakeSelector)
+    TEST_CASE("FactoryTest.MakeSelector")
     {
         RobotContext ctx;
         ctx.battery = 10;
@@ -276,17 +276,17 @@ namespace
         auto sel = make_selector<Event, RobotContext>(CheckBattery(20), ActivateAlarm{});
 
         auto result = sel.process(TickEvent{}, ctx);
-        EXPECT_EQ(result, Status::Success);
-        EXPECT_TRUE(ctx.alarm_active);
+        CHECK_EQ(result, Status::Success);
+        CHECK(ctx.alarm_active);
     }
 
-    TEST(FactoryTest, MakeInverter)
+    TEST_CASE("FactoryTest.MakeInverter")
     {
         RobotContext ctx;
 
         auto inv = make_inverter<Event, RobotContext>(AlwaysFailure<Event, RobotContext>{});
 
-        EXPECT_EQ(inv.process(TickEvent{}, ctx), Status::Success);
+        CHECK_EQ(inv.process(TickEvent{}, ctx), Status::Success);
     }
 
 } // namespace

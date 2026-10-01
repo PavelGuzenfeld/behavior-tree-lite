@@ -1,5 +1,6 @@
 #include "behavior_tree_lite/behavior_tree.hpp"
-#include <gtest/gtest.h>
+#include <doctest/doctest.h>
+#include <functional>
 
 using namespace bt;
 
@@ -27,7 +28,7 @@ namespace
         void reset() {}
     };
 
-    TEST(ActionTest, CallsProcessCallback)
+    TEST_CASE("ActionTest.CallsProcessCallback")
     {
         TestContext ctx;
         TestEvent evt{42};
@@ -45,12 +46,12 @@ namespace
 
         auto result = action.process(evt, ctx);
 
-        EXPECT_TRUE(called);
-        EXPECT_EQ(received_value, 42);
-        EXPECT_EQ(result, Status::Success);
+        CHECK(called);
+        CHECK_EQ(received_value, 42);
+        CHECK_EQ(result, Status::Success);
     }
 
-    TEST(ActionTest, CallsResetCallback)
+    TEST_CASE("ActionTest.CallsResetCallback")
     {
         TestContext ctx;
         TestEvent evt;
@@ -62,10 +63,10 @@ namespace
 
         action.reset();
 
-        EXPECT_TRUE(reset_called);
+        CHECK(reset_called);
     }
 
-    TEST(ActionTest, ModifiesContext)
+    TEST_CASE("ActionTest.ModifiesContext")
     {
         TestContext ctx;
         ctx.state = 0;
@@ -80,10 +81,10 @@ namespace
 
         action.process(evt, ctx);
 
-        EXPECT_EQ(ctx.state, 100);
+        CHECK_EQ(ctx.state, 100);
     }
 
-    TEST(ActionTest, ReturnsRunning)
+    TEST_CASE("ActionTest.ReturnsRunning")
     {
         TestContext ctx;
         TestEvent evt;
@@ -98,12 +99,12 @@ namespace
                 return Status::Running;
             });
 
-        EXPECT_EQ(action.process(evt, ctx), Status::Running);
-        EXPECT_EQ(action.process(evt, ctx), Status::Running);
-        EXPECT_EQ(action.process(evt, ctx), Status::Success);
+        CHECK_EQ(action.process(evt, ctx), Status::Running);
+        CHECK_EQ(action.process(evt, ctx), Status::Running);
+        CHECK_EQ(action.process(evt, ctx), Status::Success);
     }
 
-    TEST(ConditionTest, ReturnsTrueAsSuccess)
+    TEST_CASE("ConditionTest.ReturnsTrueAsSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -111,10 +112,10 @@ namespace
         DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &, const TestContext &) { return true; });
 
         auto result = cond.process(evt, ctx);
-        EXPECT_EQ(result, Status::Success);
+        CHECK_EQ(result, Status::Success);
     }
 
-    TEST(ConditionTest, ReturnsFalseAsFailure)
+    TEST_CASE("ConditionTest.ReturnsFalseAsFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -122,10 +123,10 @@ namespace
         DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &, const TestContext &) { return false; });
 
         auto result = cond.process(evt, ctx);
-        EXPECT_EQ(result, Status::Failure);
+        CHECK_EQ(result, Status::Failure);
     }
 
-    TEST(ConditionTest, ReadsContext)
+    TEST_CASE("ConditionTest.ReadsContext")
     {
         TestContext ctx;
         ctx.flag = true;
@@ -133,13 +134,13 @@ namespace
 
         DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &, const TestContext &c) { return c.flag; });
 
-        EXPECT_EQ(cond.process(evt, ctx), Status::Success);
+        CHECK_EQ(cond.process(evt, ctx), Status::Success);
 
         ctx.flag = false;
-        EXPECT_EQ(cond.process(evt, ctx), Status::Failure);
+        CHECK_EQ(cond.process(evt, ctx), Status::Failure);
     }
 
-    TEST(ConditionTest, ReadsEvent)
+    TEST_CASE("ConditionTest.ReadsEvent")
     {
         TestContext ctx;
         TestEvent evt{50};
@@ -147,13 +148,13 @@ namespace
         DynamicCondition<TestEvent, TestContext> cond([](const TestEvent &e, const TestContext &)
                                                       { return e.value > 25; });
 
-        EXPECT_EQ(cond.process(evt, ctx), Status::Success);
+        CHECK_EQ(cond.process(evt, ctx), Status::Success);
 
         evt.value = 10;
-        EXPECT_EQ(cond.process(evt, ctx), Status::Failure);
+        CHECK_EQ(cond.process(evt, ctx), Status::Failure);
     }
 
-    TEST(ConditionTest, NeverReturnsRunning)
+    TEST_CASE("ConditionTest.NeverReturnsRunning")
     {
         TestContext ctx;
         TestEvent evt;
@@ -163,11 +164,11 @@ namespace
         DynamicCondition<TestEvent, TestContext> cond_false([](const TestEvent &, const TestContext &)
                                                             { return false; });
 
-        EXPECT_NE(cond_true.process(evt, ctx), Status::Running);
-        EXPECT_NE(cond_false.process(evt, ctx), Status::Running);
+        CHECK_NE(cond_true.process(evt, ctx), Status::Running);
+        CHECK_NE(cond_false.process(evt, ctx), Status::Running);
     }
 
-    TEST(AlwaysSuccessTest, AlwaysReturnsSuccess)
+    TEST_CASE("AlwaysSuccessTest.AlwaysReturnsSuccess")
     {
         TestContext ctx;
         TestEvent evt;
@@ -176,11 +177,11 @@ namespace
 
         for (int i = 0; i < 10; ++i)
         {
-            EXPECT_EQ(node.process(evt, ctx), Status::Success);
+            CHECK_EQ(node.process(evt, ctx), Status::Success);
         }
     }
 
-    TEST(AlwaysFailureTest, AlwaysReturnsFailure)
+    TEST_CASE("AlwaysFailureTest.AlwaysReturnsFailure")
     {
         TestContext ctx;
         TestEvent evt;
@@ -189,11 +190,11 @@ namespace
 
         for (int i = 0; i < 10; ++i)
         {
-            EXPECT_EQ(node.process(evt, ctx), Status::Failure);
+            CHECK_EQ(node.process(evt, ctx), Status::Failure);
         }
     }
 
-    TEST(AlwaysRunningTest, AlwaysReturnsRunning)
+    TEST_CASE("AlwaysRunningTest.AlwaysReturnsRunning")
     {
         TestContext ctx;
         TestEvent evt;
@@ -202,11 +203,11 @@ namespace
 
         for (int i = 0; i < 10; ++i)
         {
-            EXPECT_EQ(node.process(evt, ctx), Status::Running);
+            CHECK_EQ(node.process(evt, ctx), Status::Running);
         }
     }
 
-    TEST(LeafTest, ResetIsIdempotent)
+    TEST_CASE("LeafTest.ResetIsIdempotent")
     {
         TestContext ctx;
         TestEvent evt;
@@ -222,9 +223,9 @@ namespace
             running.reset();
         }
 
-        EXPECT_EQ(success.process(evt, ctx), Status::Success);
-        EXPECT_EQ(failure.process(evt, ctx), Status::Failure);
-        EXPECT_EQ(running.process(evt, ctx), Status::Running);
+        CHECK_EQ(success.process(evt, ctx), Status::Success);
+        CHECK_EQ(failure.process(evt, ctx), Status::Failure);
+        CHECK_EQ(running.process(evt, ctx), Status::Running);
     }
 
 } // namespace

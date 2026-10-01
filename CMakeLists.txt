@@ -74,40 +74,20 @@ install(
 )
 
 if(BUILD_TESTING)
-  if(ament_cmake_FOUND)
-    find_package(ament_cmake_gtest QUIET)
-    if(ament_cmake_gtest_FOUND)
-      ament_add_gtest(${PROJECT_NAME}_test
-        test/test_types.cpp
-        test/test_composite.cpp
-        test/test_decorator.cpp
-        test/test_leaf.cpp
-        test/test_integration.cpp
-        test/test_dsl.cpp
-        test/test_blackboard.cpp
-      )
-      target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
-    endif()
-  else()
-    find_package(GTest QUIET)
-    if(GTest_FOUND)
-      enable_testing()
-      add_executable(${PROJECT_NAME}_test
-        test/test_types.cpp
-        test/test_composite.cpp
-        test/test_decorator.cpp
-        test/test_leaf.cpp
-        test/test_integration.cpp
-        test/test_dsl.cpp
-        test/test_blackboard.cpp
-      )
-      target_link_libraries(${PROJECT_NAME}_test
-        ${PROJECT_NAME}
-        GTest::gtest
-        GTest::gtest_main
-      )
-      add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
-    endif()
+  find_package(doctest QUIET)
+  if(doctest_FOUND)
+    enable_testing()
+    add_executable(${PROJECT_NAME}_test
+      test/test_types.cpp
+      test/test_composite.cpp
+      test/test_decorator.cpp
+      test/test_leaf.cpp
+      test/test_integration.cpp
+      test/test_dsl.cpp
+      test/test_blackboard.cpp
+    )
+    target_link_libraries(${PROJECT_NAME}_test PRIVATE ${PROJECT_NAME} doctest::doctest)
+    add_test(NAME ${PROJECT_NAME}_test COMMAND ${PROJECT_NAME}_test)
   endif()
 endif()
 
