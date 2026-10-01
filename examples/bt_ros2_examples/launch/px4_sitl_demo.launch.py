@@ -15,7 +15,7 @@ def generate_launch_description():
         ),
 
         Node(
-            package="behavior_tree_lite",
+            package="bt_ros2_examples",
             executable="px4_vehicle_node",
             name="px4_vehicle_bt",
             output="screen",

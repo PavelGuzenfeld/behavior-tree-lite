@@ -5,7 +5,7 @@ import os
 
 
 def generate_launch_description():
-    pkg_share = get_package_share_directory("behavior_tree_lite")
+    pkg_share = get_package_share_directory("bt_ros2_examples")
 
     urdf_path = os.path.join(pkg_share, "urdf", "minibot.urdf")
     rviz_path = os.path.join(pkg_share, "rviz", "patrol_demo.rviz")
@@ -18,7 +18,7 @@ def generate_launch_description():
     )
 
     patrol_robot = Node(
-        package="behavior_tree_lite",
+        package="bt_ros2_examples",
         executable="patrol_robot_node",
         output="screen",
     )
