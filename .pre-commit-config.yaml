@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v18.1.8
+    hooks:
+      - id: clang-format
+        files: ^(include|test|examples)/.*\.(hpp|cpp)$
+
+  - repo: local
+    hooks:
+      - id: clang-tidy
+        name: clang-tidy
+        language: system
+        files: ^include/.*\.hpp$
+        pass_filenames: false
+        entry: bash -c 'CC=clang-18 CXX=clang++-18 cmake -S . -B build/tidy -DCMAKE_EXPORT_COMPILE_COMMANDS=ON >/dev/null && clang-tidy-18 -p build/tidy --warnings-as-errors="*" include/behavior_tree_lite/*.hpp include/behavior_tree_lite/nodes/*.hpp'

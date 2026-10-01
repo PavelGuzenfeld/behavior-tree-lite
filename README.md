@@ -28,6 +28,8 @@ docker run --rm -v "$PWD":/repo:ro behavior-tree-lite-dev bash -c \
   'cmake -B /tmp/b -G Ninja && cmake --build /tmp/b && ctest --test-dir /tmp/b'
 ```
 
+`pre-commit install` adds the CI format and tidy checks as a commit hook (`.pre-commit-config.yaml`).
+
 Needs GCC 14+ or Clang 18+. ROS 2 Jazzy is optional, for the examples.
 Planned work is in [issues](https://github.com/PavelGuzenfeld/behavior-tree-lite/issues).
 
