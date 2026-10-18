@@ -28,6 +28,12 @@ theme:
     - search.suggest
     - toc.follow
 
+extra:
+  social:
+    - icon: fontawesome/solid/globe
+      link: https://pavelguzenfeld.com/open-source/#behavior-tree-lite
+      name: Portfolio
+
 markdown_extensions:
   - admonition
   - tables
